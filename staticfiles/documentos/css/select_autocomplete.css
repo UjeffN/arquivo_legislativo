@@ -1,0 +1,56 @@
+.select-autocomplete-wrapper {
+    position: relative;
+}
+
+.select-autocomplete-input {
+    width: 100%;
+}
+
+.select-autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ced4da;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.select-autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f8f9fa;
+    transition: background-color 0.2s;
+}
+
+.select-autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.select-autocomplete-item:hover,
+.select-autocomplete-item.selected {
+    background-color: #007bff;
+    color: white;
+}
+
+.select-autocomplete-item.selected {
+    font-weight: bold;
+}
+
+/* Manter o select original escondido mas acessível */
+.select-autocomplete-wrapper + select {
+    display: none;
+}
+
+/* Estilo para quando não há resultados */
+.select-autocomplete-no-results {
+    padding: 8px 12px;
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+}

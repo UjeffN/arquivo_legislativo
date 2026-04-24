@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Selecionar Pasta de Destino - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-folder"></i>
+                        Selecionar Pasta de Destino
+                    </h4>
+                    <p class="mb-0">
+                        Escolha a pasta onde o documento será salvo
+                    </p>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" action="{% url 'documentos:selecionar_pasta' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_pasta_destino" class="form-label">
+                                <i class="fas fa-folder-open"></i>
+                                {{ form.pasta_destino.label }}
+                            </label>
+                            {{ form.pasta_destino }}
+                            <small class="form-text text-muted">{{ form.pasta_destino.help_text }}</small>
+                            
+                            <!-- Sugestão automática baseada no OCR -->
+                            <div class="alert alert-info mt-2" id="sugestao-pasta">
+                                <h6><i class="fas fa-lightbulb"></i> Sugestão Automática</h6>
+                                <p class="mb-2">Com base nos dados extraídos pelo OCR, sugerimos:</p>
+                                <div class="sugestao-box p-2 bg-light rounded">
+                                    <code id="pasta-sugerida">{{ pasta_sugerida }}</code>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="usarSugestao()">
+                                    <i class="fas fa-check"></i> Usar Sugestão
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Lista de pastas existentes -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-folder-tree"></i>
+                                Pastas Existentes
+                            </label>
+                            <div class="pastas-existentes" style="max-height: 200px; overflow-y: auto;">
+                                {% if pastas_disponiveis %}
+                                    {% for pasta in pastas_disponiveis %}
+                                        <div class="pasta-item p-2 mb-1 border rounded cursor-pointer hover:bg-light" 
+                                             onclick="selecionarPasta('{{ pasta }}')">
+                                            <i class="fas fa-folder"></i>
+                                            <small>{{ pasta }}</small>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        Nenhuma pasta encontrada
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="arquivo_original_name" class="form-label">
+                                <i class="fas fa-file"></i>
+                                Nome do Arquivo (Opcional)
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="arquivo_original_name" 
+                                   name="arquivo_original_name"
+                                   placeholder="Ex: MEMORANDO_2024_09_001.pdf"
+                                   value="{{ dados_documento.arquivo_original_name|default:'' }}">
+                            <small class="form-text text-muted">
+                                Nome personalizado para o arquivo. Se não informado, usará o nome original.
+                            </small>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Continuar para Salvar
+                            </button>
+                            <a href="{% url 'documentos:confirmar_upload' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Voltar para Confirmação
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        Informações do Documento
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th><i class="fas fa-file-alt"></i> Nome:</th>
+                                <td>{{ dados_documento.nome|default:'' }}</td>
+                            </tr>
+                            <tr>
+                                <th><i class="fas fa-book"></i> Assunto:</th>
+                                <td>{{ dados_documento.assunto|default:'' }}</td>
+                            </tr>
+                            <tr>
+                                <th><i class="fas fa-tag"></i> Tipo:</th>
+                                <td>{{ dados_documento.tipo_documento|default:'' }}</td>
+                            </tr>
+                            <tr>
+                                <th><i class="fas fa-building"></i> Departamento:</th>
+                                <td>{{ dados_documento.departamento|default:'' }}</td>
+                            </tr>
+                            <tr>
+                                <th><i class="fas fa-calendar"></i> Data:</th>
+                                <td>{{ dados_documento.data_documento|default:'' }}</td>
+                            </tr>
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> Número:</th>
+                                <td>{{ dados_documento.numero_documento|default:'' }}</td>
+                            </tr>
+                            <tr>
+                                <th><i class="fas fa-list-ol"></i> Ano:</th>
+                                <td>{{ dados_documento.ano_documento|default:'' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="mt-3">
+                        <h6><i class="fas fa-robot"></i> Dados Extraídos pelo OCR</h6>
+                        <div class="card bg-light mb-2">
+                            <div class="card-body p-2">
+                                <small class="text-muted">
+                                    <strong>Confiança do OCR:</strong> 
+                                    {{ dados_documento.confianca_ocr|default:0 }}%
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="card bg-light">
+                            <div class="card-body p-2">
+                                <small class="text-muted">
+                                    <strong>Texto Extraído:</strong>
+                                </small>
+                                <br>
+                                <small class="text-muted">{{ dados_documento.texto_extraido|truncatechars:200|default:'' }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card-header {
+    padding: 1rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.table th {
+    border-top: none;
+    background-color: #f8f9fa;
+    font-weight: 600;
+    width: 150px;
+}
+
+.table td {
+    border-top: 1px solid #dee2e6;
+}
+
+.bg-light {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.text-muted {
+    color: #6c757d;
+}
+
+.pasta-item {
+    transition: all 0.2s ease;
+}
+
+.pasta-item:hover {
+    background-color: #e9ecef;
+    transform: translateX(2px);
+}
+
+.pasta-item.selected {
+    background-color: #007bff;
+    color: white;
+}
+
+.sugestao-box {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.pastas-existentes {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function usarSugestao() {
+    const pastaSugerida = document.getElementById('pasta-sugerida').textContent;
+    document.getElementById('id_pasta_destino').value = pastaSugerida;
+    
+    // Adicionar feedback visual
+    const sugestaoBox = document.getElementById('sugestao-pasta');
+    sugestaoBox.classList.remove('alert-info');
+    sugestaoBox.classList.add('alert-success');
+    sugestaoBox.innerHTML = `
+        <h6><i class="fas fa-check"></i> Sugestão Aplicada!</h6>
+        <p class="mb-0">A sugestão foi aplicada ao campo acima.</p>
+    `;
+    
+    // Remover feedback após 3 segundos
+    setTimeout(() => {
+        sugestaoBox.classList.remove('alert-success');
+        sugestaoBox.classList.add('alert-info');
+        sugestaoBox.innerHTML = `
+            <h6><i class="fas fa-lightbulb"></i> Sugestão Automática</h6>
+            <p class="mb-2">Com base nos dados extraídos pelo OCR, sugerimos:</p>
+            <div class="sugestao-box p-2 bg-light rounded">
+                <code id="pasta-sugerida">${pastaSugerida}</code>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="usarSugestao()">
+                <i class="fas fa-check"></i> Usar Sugestão
+            </button>
+        `;
+    }, 3000);
+}
+
+function selecionarPasta(pasta) {
+    document.getElementById('id_pasta_destino').value = pasta;
+    
+    // Remover seleção anterior
+    document.querySelectorAll('.pasta-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // Adicionar seleção atual
+    event.target.closest('.pasta-item').classList.add('selected');
+    
+    // Feedback visual
+    const input = document.getElementById('id_pasta_destino');
+    input.classList.add('is-valid');
+    
+    // Remover feedback após 2 segundos
+    setTimeout(() => {
+        input.classList.remove('is-valid');
+    }, 2000);
+}
+
+// Auto-ajustar altura da lista de pastas
+document.addEventListener('DOMContentLoaded', function() {
+    const pastasContainer = document.querySelector('.pastas-existentes');
+    if (pastasContainer) {
+        const items = pastasContainer.querySelectorAll('.pasta-item');
+        if (items.length > 5) {
+            pastasContainer.style.maxHeight = '200px';
+            pastasContainer.style.overflowY = 'auto';
+        }
+    }
+});
+</script>
+{% endblock %}

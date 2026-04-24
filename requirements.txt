@@ -1,0 +1,38 @@
+# Django Core
+django>=4.2.0
+django-extensions>=3.2.0
+
+# Database
+# SQLite (desenvolvimento e produção atual) - já vem com Python
+# psycopg2-binary>=2.9.0  # PostgreSQL (futuro, se necessário)
+
+# OCR e PDF Processing
+pytesseract>=0.3.10
+pdfplumber>=0.9.0
+Pillow>=10.0.0
+
+# File Processing
+reportlab>=4.0.0  # Para geração de etiquetas
+
+# Environment
+python-dotenv>=1.0.0
+
+# Production
+gunicorn>=21.2.0
+whitenoise>=6.5.0
+
+# Development (opcional)
+pytest>=7.4.0
+pytest-django>=4.5.0
+black>=23.7.0
+flake8>=6.0.0
+
+# Utils (opcional - para uso futuro)
+celery>=5.3.0
+redis>=4.6.0
+
+# NOTAS:
+# - Removido django-cors-headers (não está em uso)
+# - Removido python-magic (não está em uso)
+# - PostgreSQL comentado (usando SQLite atualmente)
+# - Tesseract OCR precisa ser instalado no sistema: sudo apt install tesseract-ocr

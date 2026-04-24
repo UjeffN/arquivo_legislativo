@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<style>
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .etiqueta-container, .etiqueta-container * {
+        visibility: visible;
+    }
+    .etiqueta-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    .no-print {
+        display: none !important;
+    }
+}
+
+.etiqueta-container {
+    width: 10cm;
+    height: 6cm;
+    border: 2px solid #000;
+    padding: 10px;
+    margin: 20px auto;
+    page-break-inside: avoid;
+    font-family: Arial, sans-serif;
+}
+
+.etiqueta-header {
+    text-align: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.etiqueta-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.etiqueta-content {
+    display: flex;
+    height: calc(100% - 80px);
+}
+
+.etiqueta-info {
+    flex: 1;
+    padding-right: 10px;
+}
+
+.etiqueta-info h3 {
+    font-size: 16px;
+    margin: 5px 0;
+    font-weight: bold;
+}
+
+.etiqueta-info p {
+    font-size: 12px;
+    margin: 3px 0;
+    margin: 0;
+}
+
+.etiqueta-qrcode {
+    width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.codigo-barras {
+    width: 100%;
+    height: 40px;
+    border: 1px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.etiqueta-footer {
+    text-align: center;
+    border-top: 1px solid #000;
+    padding-top: 5px;
+    margin-top: 10px;
+    font-size: 10px;
+}
+</style>
+
+<div class="no-print">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-print"></i>
+                            {{ titulo }}
+                        </h4>
+                        <p class="text-muted mb-0">Etiqueta para impressão da caixa {{ caixa.numero }}</p>
+                    </div>
+                    <div class="btn-group">
+                        <button onclick="window.print()" class="btn btn-primary">
+                            <i class="fas fa-print"></i>
+                            Imprimir Etiqueta
+                        </button>
+                        <a href="{% url 'caixas:detalhe_caixa' caixa.pk %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Voltar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Etiqueta para impressão -->
+<div class="etiqueta-container">
+    <div class="etiqueta-header">
+        <div class="etiqueta-title">CAIXA DE ARQUIVO</div>
+    </div>
+    
+    <div class="etiqueta-content">
+        <div class="etiqueta-info">
+            <h3>CAIXA {{ caixa.numero }}</h3>
+            <p><strong>Nome:</strong> {{ caixa.nome }}</p>
+            {% if caixa.localizacao_fisica %}
+                <p><strong>Localização:</strong> {{ caixa.localizacao_fisica }}</p>
+            {% endif %}
+            {% if caixa.descricao %}
+                <p><strong>Descrição:</strong> {{ caixa.descricao }}</p>
+            {% endif %}
+        </div>
+        
+            </div>
+    
+    <div class="etiqueta-footer">
+        {{ caixa.criado_em|date:"d/m/Y" }}
+    </div>
+</div>
+
+<div class="no-print mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        Informações da Etiqueta
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Número:</th>
+                            <td>{{ caixa.numero }}</td>
+                        </tr>
+                        <tr>
+                            <th>Localização:</th>
+                            <td>{{ caixa.localizacao_fisica|default:"Não definida" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Descrição:</th>
+                            <td>{{ caixa.descricao|default:"Sem descrição" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-lightbulb"></i>
+                        Instruções de Impressão
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Use papel adesivo ou etiqueta autoadesiva
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Configure a impressora para o tamanho 10x6cm
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Verifique a qualidade da impressão
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Cole em local visível na caixa
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Mantenha o código de barras acessível
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

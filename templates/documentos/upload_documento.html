@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="mb-0">
+                        <i class="fas fa-upload"></i>
+                        {{ titulo }}
+                    </h4>
+                    {% if editando %}
+                        <div class="alert alert-info mt-2">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Modo de Edição:</strong> Você está editando o documento "{{ documento_original.nome }}".
+                            <br>
+                            <small class="text-muted">O arquivo PDF original será mantido. Você pode alterar os dados ou substituir o arquivo.</small>
+                        </div>
+                    {% endif %}
+                </div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'core:home' %}">Início</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'documentos:listar' %}">Documentos</a>
+                        </li>
+                        <li class="breadcrumb-item active">Upload</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de Progresso -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="progress-step active">
+                                <div class="step-circle">
+                                    <i class="fas fa-upload"></i>
+                                </div>
+                                <div class="step-title">Upload do Arquivo</div>
+                                <div class="step-description">Selecione o arquivo PDF</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="progress-step">
+                                <div class="step-circle">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="step-title">Processamento OCR</div>
+                                <div class="step-description">Extração automática de dados</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="progress-step">
+                                <div class="step-circle">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="step-title">Confirmação</div>
+                                <div class="step-description">Revise e confirme os dados</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário de Upload -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-pdf"></i>
+                        Selecionar Arquivo PDF
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.arquivo_pdf.id_for_label }}" class="form-label">
+                                <i class="fas fa-file-pdf"></i>
+                                {{ form.arquivo_pdf.label }}
+                            </label>
+                            {{ form.arquivo_pdf }}
+                            {% if form.arquivo_pdf.help_text %}
+                                <div class="form-text">{{ form.arquivo_pdf.help_text }}</div>
+                            {% endif %}
+                            {% if form.arquivo_pdf.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.arquivo_pdf.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Área de Drag & Drop -->
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-content">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <h5>Arraste o arquivo PDF aqui</h5>
+                                <p class="text-muted">ou clique para selecionar</p>
+                                <button type="button" class="btn btn-outline-primary" id="selectFileBtn">
+                                    <i class="fas fa-folder-open"></i>
+                                    Selecionar Arquivo
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Preview do arquivo selecionado -->
+                        <div id="filePreview" class="file-preview" style="display: none;">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file-pdf fa-2x text-danger me-3"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0" id="fileName"></h6>
+                                    <small class="text-muted" id="fileSize"></small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="removeFileBtn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'documentos:listar' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                                <i class="fas fa-robot"></i>
+                                Processar com OCR
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Instruções -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        Instruções
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li class="mb-2">
+                            <strong>Selecione o arquivo PDF</strong> do documento digitalizado.
+                        </li>
+                        <li class="mb-2">
+                            <strong>O sistema irá processar</strong> o arquivo com OCR para extrair automaticamente:
+                            <ul class="mt-1">
+                                <li>Tipo de documento (Portaria, Lei, etc.)</li>
+                                <li>Número e ano</li>
+                                <li>Data do documento</li>
+                                <li>Assunto principal</li>
+                            </ul>
+                        </li>
+                        <li class="mb-2">
+                            <strong>Revise e confirme</strong> os dados extraídos antes de salvar.
+                        </li>
+                        <li>
+                            <strong>O documento será arquivado</strong> na caixa selecionada e organizado por pasta.
+                        </li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Requisitos -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-check-circle"></i>
+                        Requisitos do Arquivo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Formato: PDF
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Tamanho máximo: 50MB
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            Qualidade: Mínima 200 DPI
+                        </li>
+                        <li>
+                            <i class="fas fa-check text-success"></i>
+                            Orientação: Preferencialmente retrato
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="processingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Processando...</span>
+                </div>
+                <h5>Processando Documento</h5>
+                <p class="text-muted">O sistema está extraindo informações do documento com OCR...</p>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.upload-area:hover,
+.upload-area.dragover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+.upload-content {
+    pointer-events: none;
+}
+
+.file-preview {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #f8f9fa;
+}
+
+.progress-step {
+    position: relative;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.progress-step.active {
+    opacity: 1;
+}
+
+.step-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem;
+    font-size: 1.2rem;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.progress-step.active .step-circle {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.step-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.step-description {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.progress-step.active .step-description {
+    color: #495057;
+}
+
+#arquivo_pdf {
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('arquivo_pdf');
+    const filePreview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    const processingModal = new bootstrap.Modal(document.getElementById('processingModal'));
+
+    // Click no upload area
+    uploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    // Click no botão selecionar
+    selectFileBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        fileInput.click();
+    });
+
+    // Drag and drop
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect(files[0]);
+        }
+    });
+
+    // File selection
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+
+    // Remove file
+    removeFileBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        filePreview.style.display = 'none';
+        uploadArea.style.display = 'block';
+        submitBtn.disabled = true;
+    });
+
+    // Form submission
+    uploadForm.addEventListener('submit', function(e) {
+        processingModal.show();
+    });
+
+    function handleFileSelect(file) {
+        // Validate file type
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            alert('Por favor, selecione apenas arquivos PDF.');
+            fileInput.value = '';
+            return;
+        }
+
+        // Validate file size (50MB)
+        if (file.size > 50 * 1024 * 1024) {
+            alert('O arquivo não pode ser maior que 50MB.');
+            fileInput.value = '';
+            return;
+        }
+
+        // Show preview
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        filePreview.style.display = 'block';
+        uploadArea.style.display = 'none';
+        submitBtn.disabled = false;
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+});
+</script>
+{% endblock %}

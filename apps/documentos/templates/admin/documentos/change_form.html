@@ -1,0 +1,8 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'documentos/css/select_autocomplete.css' %}">
+<script src="{% static 'documentos/js/select_autocomplete.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>
+                    <i class="fas fa-file-alt"></i>
+                    {{ titulo }}
+                </h1>
+                <div>
+                    <a href="{% url 'documentos:download' documento.id %}" class="btn btn-success">
+                        <i class="fas fa-download"></i>
+                        Download PDF
+                    </a>
+                    <a href="{% url 'documentos:listar' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Informações Principais -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle"></i>
+                        Informações do Documento
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Número/Ano</label>
+                                <p class="form-control-plaintext">
+                                    <strong>{{ documento.numero_documento }}/{{ documento.data_documento.year }}</strong>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Tipo de Documento</label>
+                                <p class="form-control-plaintext">
+                                    <span class="badge bg-info">{{ documento.tipo_documento.nome }}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Nome</label>
+                        <p class="form-control-plaintext">{{ documento.nome }}</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Assunto</label>
+                        <p class="form-control-plaintext">{{ documento.assunto|linebreaks }}</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Departamento</label>
+                                <p class="form-control-plaintext">
+                                    {{ documento.departamento.sigla }} - {{ documento.departamento.nome }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Data do Documento</label>
+                                <p class="form-control-plaintext">{{ documento.data_documento|date:"d/m/Y" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Caixa</label>
+                                <p class="form-control-plaintext">
+                                    <span class="badge bg-secondary">{{ documento.caixa.descricao_completa }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Data de Upload</label>
+                                <p class="form-control-plaintext">{{ documento.data_upload|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if documento.palavra_chave %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Palavras-chave</label>
+                            <p class="form-control-plaintext">{{ documento.palavra_chave }}</p>
+                        </div>
+                    {% endif %}
+
+                    {% if documento.observacao %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Observações</label>
+                            <p class="form-control-plaintext">{{ documento.observacao|linebreaks }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Texto Extraído (OCR) -->
+            {% if documento.texto_extraido %}
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-robot"></i>
+                            Texto Extraído (OCR)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-control" style="min-height: 200px; white-space: pre-wrap;">
+                            {{ documento.texto_extraido }}
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            Texto extraído automaticamente via OCR do documento PDF.
+                        </small>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <!-- Informações do Arquivo -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-file-pdf"></i>
+                        Informações do Arquivo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Nome do Arquivo</label>
+                        <p class="form-control-plaintext">
+                            <small>{{ documento.arquivo_pdf.name|slice:"-30:" }}</small>
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Tamanho</label>
+                        <p class="form-control-plaintext">
+                            {{ documento.tamanho_arquivo|floatformat:2 }} MB
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">OCR Processado</label>
+                        <p class="form-control-plaintext">
+                            {% if documento.ocr_processado %}
+                                <span class="badge bg-success">Sim</span>
+                            {% else %}
+                                <span class="badge bg-warning">Não</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-cogs"></i>
+                        Ações
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'documentos:download' documento.id %}" class="btn btn-success">
+                            <i class="fas fa-download"></i>
+                            Download PDF
+                        </a>
+                        {% if pode_editar %}
+                            <a href="{% url 'documentos:editar' documento.id %}" class="btn btn-primary">
+                                <i class="fas fa-edit"></i>
+                                Editar Documento
+                            </a>
+                        {% endif %}
+                        {% if pode_excluir %}
+                            <button class="btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                                Excluir Documento
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações da Caixa -->
+            {% if documento.caixa %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-box"></i>
+                        Informações da Caixa
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Caixa:</strong> {{ documento.caixa.descricao_completa }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Ocupação:</strong> 
+                        <span class="badge bg-{{ documento.caixa.esta_cheia|yesno:'danger,success' }}">
+                            {{ documento.caixa.quantidade_documentos }}/{{ documento.caixa.capacidade_maxima }}
+                            ({{ documento.caixa.percentual_ocupacao|floatformat:1 }}%)
+                        </span>
+                    </div>
+                    {% if documento.caixa.localizacao_fisica %}
+                        <div class="mb-2">
+                            <strong>Localização:</strong> {{ documento.caixa.localizacao_fisica }}
+                        </div>
+                    {% endif %}
+                    <div class="mb-2">
+                        <strong>Vagas disponíveis:</strong> {{ documento.caixa.vagas_disponiveis }}
+                    </div>
+                    {% if documento.caixa.descricao %}
+                        <div>
+                            <strong>Descrição:</strong> {{ documento.caixa.descricao }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}Página Inicial - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card border-0 shimmer">
+            <div class="card-body text-center p-5">
+                <h1 class="display-4 mb-4">
+                    <i class="fas fa-landmark"></i>
+                    Câmara Municipal de Parauapebas
+                </h1>
+                <p class="lead mb-4">Sistema de Arquivo Digital para gestão documental</p>
+                <div class="border-top border-bottom py-3 my-4">
+                    <p class="mb-0">Sistema desenvolvido para digitalização, organização e gerenciamento de documentos municipais com processamento OCR automático.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cards de Funcionalidades -->
+<div class="row g-4">
+    <div class="col-md-3">
+        <div class="card h-100 border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-upload fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Upload de Documentos</h5>
+                <p class="card-text">Faça upload de documentos digitalizados com extração automática de dados via OCR</p>
+                <a href="{% url 'documentos:upload' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Novo Documento
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                <h5 class="card-title">Documentos</h5>
+                <p class="card-text">Visualize e pesquise documentos digitalizados com texto extraído</p>
+                <a href="{% url 'documentos:listar' %}" class="btn btn-danger">
+                    <i class="fas fa-search"></i> Ver Documentos
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-archive fa-3x text-info mb-3"></i>
+                <h5 class="card-title">Caixas</h5>
+                <p class="card-text">Gerencie caixas de arquivo físico para organização documental</p>
+                <a href="{% url 'caixas:listar_caixas' %}" class="btn btn-info">
+                    <i class="fas fa-archive"></i> Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-0">
+            <div class="card-body text-center">
+                <i class="fas fa-search fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Pesquisa</h5>
+                <p class="card-text">Pesquise documentos por texto extraído via OCR</p>
+                <a href="{% url 'documentos:pesquisar' %}" class="btn btn-success">
+                    <i class="fas fa-search"></i> Pesquisar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Workflow Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card border-0">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cogs"></i>
+                    Fluxo de Trabalho
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-2">
+                        <div class="workflow-step">
+                            <div class="step-icon">
+                                <i class="fas fa-scanner"></i>
+                            </div>
+                            <h6>1. Escanear</h6>
+                            <small>Digitalize o documento</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="workflow-step">
+                            <div class="step-icon">
+                                <i class="fas fa-upload"></i>
+                            </div>
+                            <h6>2. Upload</h6>
+                            <small>Envie o PDF</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="workflow-step">
+                            <div class="step-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <h6>3. OCR</h6>
+                            <small>Extração automática</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="workflow-step">
+                            <div class="step-icon">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <h6>4. Revisar</h6>
+                            <small>Confirme os dados</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="workflow-step">
+                            <div class="step-icon">
+                                <i class="fas fa-save"></i>
+                            </div>
+                            <h6>5. Salvar</h6>
+                            <small>Arquive o documento</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="workflow-step">
+                            <div class="step-icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <h6>6. Caixa</h6>
+                            <small>Guarde o físico</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas Rápidas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar"></i>
+                    Estatísticas do Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <h3 class="text-primary">0</h3>
+                            <p class="mb-0">Documentos Cadastrados</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <h3 class="text-success">5</h3>
+                            <p class="mb-0">Caixas Ativas</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <h3 class="text-info">13</h3>
+                            <p class="mb-0">Departamentos</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <h3 class="text-warning">10</h3>
+                            <p class="mb-0">Tipos de Documento</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.workflow-step {
+    padding: 20px;
+    border-radius: 10px;
+    background: var(--bg-accent);
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.workflow-step:hover {
+    background: var(--bg-primary);
+    transform: translateY(-2px);
+}
+
+.step-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.stat-item {
+    padding: 20px;
+    border-radius: 10px;
+    background: var(--bg-accent);
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    background: var(--bg-primary);
+    transform: translateY(-2px);
+}
+
+.stat-item h3 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.stat-item p {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+</style>
+{% endblock %}

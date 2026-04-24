@@ -1,0 +1,51 @@
+.departamento-autocomplete-wrapper {
+    position: relative;
+}
+
+.departamento-autocomplete {
+    width: 100%;
+}
+
+.ui-autocomplete {
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.ui-menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.ui-menu-item:last-child {
+    border-bottom: none;
+}
+
+.ui-menu-item:hover {
+    background-color: #f8f9fa;
+}
+
+.ui-menu-item.ui-state-active {
+    background-color: #007bff;
+    color: white;
+}
+
+.departamento-sigla {
+    font-weight: bold;
+    color: #495057;
+}
+
+.departamento-nome {
+    color: #6c757d;
+    margin-left: 8px;
+}
+
+.ui-state-active .departamento-sigla,
+.ui-state-active .departamento-nome {
+    color: white;
+}

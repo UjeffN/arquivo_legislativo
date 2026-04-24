@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Pesquisa de Documentos - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-search"></i>
+                    Pesquisa de Documentos
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{% url 'documentos:pesquisar' %}">
+                    <div class="row g-3">
+                        <div class="col-md-10">
+                            <div class="form-group">
+                                <input type="text" 
+                                       name="q" 
+                                       class="form-control" 
+                                       placeholder="Digite o termo para pesquisar..."
+                                       value="{{ query }}"
+                                       autofocus>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i>
+                                    Pesquisar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if query %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            Encontrados <strong>{{ total_resultados }}</strong> resultados para "<strong>{{ query }}</strong>"
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if documentos %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-pdf"></i>
+                    Resultados da Pesquisa
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Tipo</th>
+                                <th>Departamento</th>
+                                <th>Caixa</th>
+                                <th>Data</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for documento in documentos %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'documentos:detalhe' documento.id %}" 
+                                       class="text-decoration-none">
+                                        {{ documento.nome|default:"Sem nome" }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        {{ documento.tipo_documento.nome|default:"Não definido" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ documento.departamento.nome|default:"Não definido" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'caixas:detalhe_caixa' documento.caixa.id %}" 
+                                       class="badge bg-secondary text-decoration-none">
+                                        {{ documento.caixa.numero }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <small>{{ documento.criado_em|date:"d/m/Y" }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'documentos:detalhe' documento.id %}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           title="Ver detalhes">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'documentos:editar' documento.id %}" 
+                                           class="btn btn-sm btn-outline-warning" 
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'documentos:download' documento.id %}" 
+                                           class="btn btn-sm btn-outline-success" 
+                                           title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginação -->
+                {% if documentos.has_other_pages %}
+                <nav aria-label="Paginação">
+                    <ul class="pagination justify-content-center">
+                        {% if documentos.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ query }}&page={{ documentos.previous_page_number }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in documentos.paginator.page_range %}
+                        {% if documentos.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > documentos.number|add:'-3' and num < documentos.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if documentos.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ query }}&page={{ documentos.next_page_number }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+{% if query %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Nenhum documento encontrado</h5>
+                <p class="text-muted">
+                    Não foram encontrados documentos para o termo "<strong>{{ query }}</strong>".
+                </p>
+                <a href="{% url 'documentos:listar' %}" class="btn btn-primary">
+                    <i class="fas fa-list"></i>
+                    Ver Todos os Documentos
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
