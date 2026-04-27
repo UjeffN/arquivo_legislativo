@@ -1,0 +1,492 @@
+{% extends 'admin-base.html' %}
+
+{% block title %}Confirmar Documento - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header fade-in">
+    <h1 class="page-title">Confirmar Dados do Documento</h1>
+    <p class="page-description">Revise e ajuste as informações extraídas pelo OCR</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main Form -->
+    <div class="lg:col-span-2">
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-check-circle mr-2 text-green-500"></i>
+                    Dados Extraídos pelo OCR
+                </h2>
+            </div>
+            <div class="card-body">
+                {% if editando %}
+                <div class="alert alert-warning mb-4">
+                    <i class="fas fa-edit mr-2"></i>
+                    <strong>Editando documento:</strong> {{ documento_original.nome }}
+                </div>
+                {% endif %}
+                
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Document Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-file-alt mr-2"></i>
+                                Nome do Documento
+                            </label>
+                            {{ form.nome }}
+                            {% if form.nome.errors %}
+                                <div class="mt-2 text-red-500 text-sm">
+                                    {% for error in form.nome.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-hashtag mr-2"></i>
+                                Número do Documento
+                            </label>
+                            {{ form.numero_documento }}
+                            {% if form.numero_documento.errors %}
+                                <div class="mt-2 text-red-500 text-sm">
+                                    {% for error in form.numero_documento.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Type and Department -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-tag mr-2"></i>
+                                Tipo de Documento
+                            </label>
+                            {{ form.tipo_documento }}
+                            {% if form.tipo_documento.errors %}
+                                <div class="mt-2 text-red-500 text-sm">
+                                    {% for error in form.tipo_documento.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-building mr-2"></i>
+                                Departamento
+                            </label>
+                            {{ form.departamento }}
+                            {% if form.departamento.errors %}
+                                <div class="mt-2 text-red-500 text-sm">
+                                    {% for error in form.departamento.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Date and Subject -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-calendar mr-2"></i>
+                            Data do Documento
+                        </label>
+                        {{ form.data_documento }}
+                        {% if form.data_documento.errors %}
+                            <div class="mt-2 text-red-500 text-sm">
+                                {% for error in form.data_documento.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-align-left mr-2"></i>
+                            Assunto
+                        </label>
+                        {{ form.assunto }}
+                        {% if form.assunto.errors %}
+                            <div class="mt-2 text-red-500 text-sm">
+                                {% for error in form.assunto.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Additional Fields -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-key mr-2"></i>
+                            Palavras-chave
+                        </label>
+                        {{ form.palavra_chave }}
+                        {% if form.palavra_chave.errors %}
+                            <div class="mt-2 text-red-500 text-sm">
+                                {% for error in form.palavra_chave.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-comment mr-2"></i>
+                            Observações
+                        </label>
+                        {{ form.observacao }}
+                        {% if form.observacao.errors %}
+                            <div class="mt-2 text-red-500 text-sm">
+                                {% for error in form.observacao.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- OCR Info -->
+                    {% if dados_documento.ocr_preenchido %}
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fas fa-robot text-blue-600 text-xl"></i>
+                            <div>
+                                <h4 class="font-semibold text-blue-900">Informações do OCR</h4>
+                                <p class="text-sm text-blue-700">Confiança da extração: {{ dados_documento.confianca_ocr }}%</p>
+                            </div>
+                        </div>
+                        {% if dados_documento.texto_extraido %}
+                        <div class="mt-3">
+                            <p class="text-sm font-medium text-blue-900 mb-2">Texto Extraído:</p>
+                            <div class="bg-white rounded p-3 text-sm text-gray-700 max-h-32 overflow-y-auto">
+                                {{ dados_documento.texto_extraido|truncatewords:50 }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Submit Buttons -->
+                    <div class="flex gap-3 pt-4 border-t">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-2"></i>
+                            {% if editando %}Atualizar{% else %}Salvar{% endif %} Documento
+                        </button>
+                        <a href="{% url 'documentos:upload' %}" class="btn btn-outline">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Voltar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="lg:col-span-1">
+        <div class="space-y-6">
+            <!-- Document Preview -->
+            {% if arquivo_preview %}
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-pdf mr-2 text-red-500"></i>
+                        Prévia do Documento
+                    </h3>
+                    <div class="flex gap-2">
+                        <button onclick="expandPreview()" class="btn btn-sm btn-outline">
+                            <i class="fas fa-expand mr-1"></i>
+                            Ampliar
+                        </button>
+                        <button onclick="downloadPDF()" class="btn btn-sm btn-outline">
+                            <i class="fas fa-download mr-1"></i>
+                            Download
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="bg-gray-100 rounded-t-lg p-3 border-b">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700">{{ arquivo_original }}</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="zoomIn()" class="btn btn-xs btn-outline" title="Aumentar zoom">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                <button onclick="zoomOut()" class="btn btn-xs btn-outline" title="Diminuir zoom">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <button onclick="resetZoom()" class="btn btn-xs btn-outline" title="Resetar zoom">
+                                    <i class="fas fa-compress"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative bg-gray-50" style="height: 600px;">
+                        <iframe 
+                            src="{{ arquivo_preview }}" 
+                            class="w-full h-full border-0"
+                            id="pdfPreview"
+                            style="transform: scale(1); transform-origin: top center;">
+                        </iframe>
+                    </div>
+                    <div class="bg-gray-100 rounded-b-lg p-3 border-t">
+                        <div class="flex items-center justify-between text-xs text-gray-500">
+                            <span>Use os botões de zoom para ajustar a visualização</span>
+                            <span id="zoomLevel">Zoom: 100%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- OCR Status -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-cog mr-2 text-gray-500"></i>
+                        Status do Processamento
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-green-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Upload Concluído</p>
+                                <p class="text-xs text-gray-500">Arquivo recebido</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-green-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">OCR Processado</p>
+                                <p class="text-xs text-gray-500">Texto extraído</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-edit text-blue-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Aguardando Confirmação</p>
+                                <p class="text-xs text-gray-500">Revise os dados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Help -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-question-circle mr-2 text-blue-500"></i>
+                        Ajuda
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="space-y-3 text-sm text-gray-600">
+                        <p><strong>OCR:</strong> O sistema extraiu automaticamente as informações do documento.</p>
+                        <p><strong>Revisão:</strong> Verifique se todos os dados estão corretos.</p>
+                        <p><strong>Ajuste:</strong> Modifique qualquer informação que precise ser corrigida.</p>
+                        <p><strong>Salvar:</strong> Confirme para salvar o documento no sistema.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Additional styles for this page */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.gap-3 { gap: 0.75rem; }
+.gap-6 { gap: 1.5rem; }
+.gap-8 { gap: 2rem; }
+
+.space-y-3 > * + * { margin-top: 0.75rem; }
+.space-y-6 > * + * { margin-top: 1.5rem; }
+
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 0.75rem; }
+.mt-4 { margin-top: 1rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.pt-4 { padding-top: 1rem; }
+
+.w-8 { width: 2rem; }
+.h-8 { height: 2rem; }
+.h-32 { height: 8rem; }
+
+.max-h-32 { max-height: 8rem; }
+
+.flex { display: flex; }
+.flex-1 { flex: 1 1 0%; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+
+.text-center { text-align: center; }
+
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+
+.text-gray-500 { color: #64748b; }
+.text-gray-600 { color: #475569; }
+.text-gray-700 { color: #374151; }
+.text-gray-900 { color: #1e293b; }
+
+.text-blue-600 { color: #2563eb; }
+.text-blue-700 { color: #1d4ed8; }
+.text-blue-900 { color: #1e3a8a; }
+.text-red-500 { color: #ef4444; }
+.text-green-600 { color: #10b981; }
+
+.bg-gray-100 { background-color: #f3f4f6; }
+.bg-blue-50 { background-color: #eff6ff; }
+.bg-green-100 { background-color: #ecfdf5; }
+
+.border { border-width: 1px; }
+.border-blue-200 { border-color: #bfdbfe; }
+.border-t { border-top-width: 1px; }
+
+.rounded { border-radius: 0.375rem; }
+.rounded-lg { border-radius: 0.5rem; }
+
+.overflow-y-auto { overflow-y: auto; }
+
+@media (min-width: 768px) {
+    .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+    .lg\:col-span-1 { grid-column: span 1 / span 1; }
+    .lg\:col-span-2 { grid-column: span 2 / span 2; }
+    .lg\:col-span-3 { grid-column: span 3 / span 3; }
+}
+</style>
+
+<script>
+// PDF Preview Controls
+let currentZoom = 1;
+const zoomLevels = [0.5, 0.75, 1, 1.25, 1.5, 2];
+let currentZoomIndex = 2; // Start at 100%
+
+function zoomIn() {
+    if (currentZoomIndex < zoomLevels.length - 1) {
+        currentZoomIndex++;
+        currentZoom = zoomLevels[currentZoomIndex];
+        updateZoom();
+    }
+}
+
+function zoomOut() {
+    if (currentZoomIndex > 0) {
+        currentZoomIndex--;
+        currentZoom = zoomLevels[currentZoomIndex];
+        updateZoom();
+    }
+}
+
+function resetZoom() {
+    currentZoomIndex = 2; // Reset to 100%
+    currentZoom = zoomLevels[currentZoomIndex];
+    updateZoom();
+}
+
+function updateZoom() {
+    const iframe = document.getElementById('pdfPreview');
+    if (iframe) {
+        iframe.style.transform = `scale(${currentZoom})`;
+        iframe.style.transformOrigin = 'top center';
+        document.getElementById('zoomLevel').textContent = `Zoom: ${Math.round(currentZoom * 100)}%`;
+    }
+}
+
+function expandPreview() {
+    const iframe = document.getElementById('pdfPreview');
+    if (iframe && iframe.requestFullscreen) {
+        iframe.requestFullscreen();
+    } else if (iframe && iframe.webkitRequestFullscreen) {
+        iframe.webkitRequestFullscreen();
+    } else if (iframe && iframe.msRequestFullscreen) {
+        iframe.msRequestFullscreen();
+    }
+}
+
+function downloadPDF() {
+    const link = document.createElement('a');
+    link.href = '{{ arquivo_preview }}';
+    link.download = '{{ arquivo_original }}';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case '+':
+            case '=':
+                e.preventDefault();
+                zoomIn();
+                break;
+            case '-':
+                e.preventDefault();
+                zoomOut();
+                break;
+            case '0':
+                e.preventDefault();
+                resetZoom();
+                break;
+        }
+    }
+});
+
+// Mouse wheel zoom
+document.addEventListener('DOMContentLoaded', function() {
+    const iframe = document.getElementById('pdfPreview');
+    if (iframe) {
+        iframe.addEventListener('wheel', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

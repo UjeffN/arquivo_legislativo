@@ -1,0 +1,304 @@
+{% extends 'admin-base.html' %}
+
+{% block title %}Dashboard - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header fade-in">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-description">Bem-vindo ao Sistema de Arquivo Digital da Câmara Municipal de Parauapebas</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stat-card fade-in">
+        <div class="stat-icon primary">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-value">{{ total_documentos }}</div>
+        <div class="stat-label">Documentos Cadastrados</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up mr-1"></i>
+            {{ documentos_mes_count }} este mês
+        </div>
+    </div>
+    
+    <div class="stat-card fade-in">
+        <div class="stat-icon success">
+            <i class="fas fa-archive"></i>
+        </div>
+        <div class="stat-value">{{ total_caixas }}</div>
+        <div class="stat-label">Caixas Ativas</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up mr-1"></i>
+            {{ caixas_novas_count }} novas
+        </div>
+    </div>
+    
+    <div class="stat-card fade-in">
+        <div class="stat-icon warning">
+            <i class="fas fa-building"></i>
+        </div>
+        <div class="stat-value">{{ total_departamentos }}</div>
+        <div class="stat-label">Departamentos</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up mr-1"></i>
+            100% ativos
+        </div>
+    </div>
+    
+    <div class="stat-card fade-in">
+        <div class="stat-icon info">
+            <i class="fas fa-tags"></i>
+        </div>
+        <div class="stat-value">{{ total_tipos }}</div>
+        <div class="stat-label">Tipos de Documento</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up mr-1"></i>
+            Bem configurado
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-8 fade-in">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-bolt mr-2 text-yellow-500"></i>
+            Ações Rápidas
+        </h2>
+    </div>
+    <div class="card-body">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="{% url 'documentos:upload' %}" class="btn btn-primary w-full justify-center">
+                <i class="fas fa-plus"></i>
+                Novo Documento
+            </a>
+            <a href="{% url 'documentos:listar' %}" class="btn btn-outline w-full justify-center">
+                <i class="fas fa-list"></i>
+                Ver Documentos
+            </a>
+            <a href="{% url 'caixas:listar_caixas' %}" class="btn btn-outline w-full justify-center">
+                <i class="fas fa-archive"></i>
+                Gerenciar Caixas
+            </a>
+            <a href="{% url 'documentos:pesquisar' %}" class="btn btn-outline w-full justify-center">
+                <i class="fas fa-search"></i>
+                Pesquisar
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Workflow Section
+<div class="card mb-8 fade-in">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-cogs mr-2 text-blue-500"></i>
+            Fluxo de Trabalho Digital
+        </h2>
+    </div>
+    <div class="card-body">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div class="text-center">
+                <div class="w-16 h-16 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-scanner text-blue-600 text-xl"></i>
+                </div>
+                <h6 class="font-semibold text-gray-900 mb-1">1. Escanear</h6>
+                <p class="text-xs text-gray-500">Digitalize o documento</p>
+            </div>
+            
+            <div class="text-center">
+                <div class="w-16 h-16 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-upload text-green-600 text-xl"></i>
+                </div>
+                <h6 class="font-semibold text-gray-900 mb-1">2. Upload</h6>
+                <p class="text-xs text-gray-500">Envie o PDF</p>
+            </div>
+            
+            <div class="text-center">
+                <div class="w-16 h-16 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-robot text-purple-600 text-xl"></i>
+                </div>
+                <h6 class="font-semibold text-gray-900 mb-1">3. OCR</h6>
+                <p class="text-xs text-gray-500">Extração automática</p>
+            </div>
+            
+            <div class="text-center">
+                <div class="w-16 h-16 mx-auto mb-3 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-edit text-yellow-600 text-xl"></i>
+                </div>
+                <h6 class="font-semibold text-gray-900 mb-1">4. Revisar</h6>
+                <p class="text-xs text-gray-500">Confirme os dados</p>
+            </div>
+            
+            <div class="text-center">
+                <div class="w-16 h-16 mx-auto mb-3 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-save text-indigo-600 text-xl"></i>
+                </div>
+                <h6 class="font-semibold text-gray-900 mb-1">5. Salvar</h6>
+                <p class="text-xs text-gray-500">Arquive o documento</p>
+            </div>
+            
+            <div class="text-center">
+                <div class="w-16 h-16 mx-auto mb-3 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-box text-red-600 text-xl"></i>
+                </div>
+                <h6 class="font-semibold text-gray-900 mb-1">6. Caixa</h6>
+                <p class="text-xs text-gray-500">Guarde o físico</p>
+            </div>
+        </div>
+    </div>
+</div>-->
+
+<!-- Recent Activity -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="card fade-in">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-clock mr-2 text-gray-500"></i>
+                Atividade Recente
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="space-y-4">
+                {% for atividade in atividades %}
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-{{ atividade.color }}-100 rounded-full flex items-center justify-center">
+                        <i class="fas {{ atividade.icon }} text-{{ atividade.color }}-600 text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">{{ atividade.titulo }}</p>
+                        <p class="text-xs text-gray-500">{{ atividade.descricao }} • {{ atividade.data|timesince }} atrás</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500 text-center py-4">Nenhuma atividade recente.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="card fade-in">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-chart-line mr-2 text-green-500"></i>
+                Estatísticas Rápidas
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Documentos esta semana</span>
+                    <span class="badge badge-success">{{ documentos_semana_count }}</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Uploads hoje</span>
+                    <span class="badge badge-primary">{{ uploads_hoje }}</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Capacidade de Caixas</span>
+                    <span class="badge badge-warning">{{ caixas_ocupacao }}%</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">OCR processados</span>
+                    <span class="badge badge-info">{{ ocr_percentual }}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Additional styles for this page */
+.grid {
+    display: grid;
+}
+
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+.gap-8 { gap: 2rem; }
+
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-8 { margin-bottom: 2rem; }
+
+.mr-1 { margin-right: 0.25rem; }
+.mr-2 { margin-right: 0.5rem; }
+.mr-3 { margin-right: 0.75rem; }
+
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+.space-y-4 > * + * { margin-top: 1rem; }
+
+.space-x-3 > * + * { margin-left: 0.75rem; }
+
+.flex { display: flex; }
+.flex-1 { flex: 1 1 0%; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+
+.text-center { text-align: center; }
+
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+
+.font-semibold { font-weight: 600; }
+.font-medium { font-weight: 500; }
+
+.text-gray-500 { color: #64748b; }
+.text-gray-600 { color: #475569; }
+.text-gray-900 { color: #1e293b; }
+
+.text-blue-600 { color: #3b82f6; }
+.text-green-600 { color: #10b981; }
+.text-purple-600 { color: #9333ea; }
+.text-yellow-600 { color: #f59e0b; }
+.text-red-600 { color: #ef4444; }
+.text-indigo-600 { color: #6366f1; }
+
+.bg-blue-100 { background-color: #eff6ff; }
+.bg-green-100 { background-color: #ecfdf5; }
+.bg-purple-100 { background-color: #f3e8ff; }
+.bg-yellow-100 { background-color: #fffbeb; }
+.bg-red-100 { background-color: #fef2f2; }
+.bg-indigo-100 { background-color: #eef2ff; }
+
+.w-16 { width: 4rem; }
+.w-10 { width: 2.5rem; }
+.w-48 { width: 12rem; }
+
+.h-16 { height: 4rem; }
+.h-10 { height: 2.5rem; }
+
+.rounded-full { border-radius: 9999px; }
+
+.relative { position: relative; }
+.absolute { position: absolute; }
+
+.right-0 { right: 0; }
+.mt-2 { margin-top: 0.5rem; }
+
+.hidden { display: none; }
+
+@media (min-width: 768px) {
+    .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+    .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .lg\:grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+</style>
+{% endblock %}

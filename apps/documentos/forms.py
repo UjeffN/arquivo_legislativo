@@ -88,9 +88,9 @@ class DocumentoUploadForm(forms.ModelForm):
             if not arquivo.name.lower().endswith('.pdf'):
                 raise ValidationError('Apenas arquivos PDF são permitidos.')
             
-            # Verificar tamanho (50MB)
-            if arquivo.size > 50 * 1024 * 1024:
-                raise ValidationError('O arquivo não pode ser maior que 50MB.')
+            # Verificar tamanho (500MB)
+            if arquivo.size > 500 * 1024 * 1024:
+                raise ValidationError('O arquivo não pode ser maior que 500MB.')
         
         return arquivo
     
@@ -139,9 +139,9 @@ class DocumentoOCRForm(forms.Form):
             if not arquivo.name.lower().endswith('.pdf'):
                 raise ValidationError('Apenas arquivos PDF são permitidos.')
             
-            # Verificar tamanho (50MB)
-            if arquivo.size > 50 * 1024 * 1024:
-                raise ValidationError('O arquivo não pode ser maior que 50MB.')
+            # Verificar tamanho (500MB)
+            if arquivo.size > 500 * 1024 * 1024:
+                raise ValidationError('O arquivo não pode ser maior que 500MB.')
         
         return arquivo
 

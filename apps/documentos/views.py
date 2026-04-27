@@ -161,7 +161,7 @@ def upload_documento(request):
         'documento_original': Documento.objects.get(id=documento_editando_id) if documento_editando else None
     }
     
-    return render(request, 'documentos/upload_documento.html', context)
+    return render(request, 'admin/documentos_upload.html', context)
 
 
 @login_required
@@ -223,7 +223,7 @@ def confirmar_upload(request):
         # Adicionar arquivo base64 ao formulário se necessário
         form.fields['arquivo_pdf'].required = False
     
-    return render(request, 'documentos/confirmar_upload.html', {
+    return render(request, 'admin/documentos_confirmar_upload.html', {
         'form': form,
         'dados_documento': dados_documento,
         'arquivo_preview': arquivo_base64,
@@ -457,9 +457,9 @@ def detalhe_documento(request, documento_id):
 def listar_documentos(request):
     """View para listagem de documentos com filtros"""
     
-    documentos = Documento.objects.select_related(
+    documentos_list = Documento.objects.select_related(
         'tipo_documento', 'departamento', 'caixa'
-    ).order_by('-data_documento')
+    ).order_by('-data_upload')  # Ordenar por upload para mostrar novos primeiro
     
     # Filtros
     search = request.GET.get('search', '')
@@ -469,7 +469,7 @@ def listar_documentos(request):
     ano = request.GET.get('ano', '')
     
     if search:
-        documentos = documentos.filter(
+        documentos_list = documentos_list.filter(
             models.Q(nome__icontains=search) |
             models.Q(assunto__icontains=search) |
             models.Q(numero_documento__icontains=search) |
@@ -477,16 +477,21 @@ def listar_documentos(request):
         )
     
     if tipo:
-        documentos = documentos.filter(tipo_documento_id=tipo)
+        documentos_list = documentos_list.filter(tipo_documento_id=tipo)
     
     if departamento:
-        documentos = documentos.filter(departamento_id=departamento)
+        documentos_list = documentos_list.filter(departamento_id=departamento)
     
     if caixa:
-        documentos = documentos.filter(caixa_id=caixa)
+        documentos_list = documentos_list.filter(caixa_id=caixa)
     
     if ano:
-        documentos = documentos.filter(ano_documento=ano)
+        documentos_list = documentos_list.filter(data_documento__year=ano)
+    
+    # Paginação
+    paginator = Paginator(documentos_list, 20)  # 20 por página
+    page = request.GET.get('page')
+    documentos = paginator.get_page(page)
     
     context = {
         'documentos': documentos,
@@ -503,7 +508,7 @@ def listar_documentos(request):
         }
     }
     
-    return render(request, 'documentos/listar_documentos.html', context)
+    return render(request, 'admin/documentos_listar.html', context)
 
 
 @login_required
@@ -655,18 +660,37 @@ def departamento_autocomplete(request):
 
 @login_required
 def pesquisar_documentos(request):
-    """View para pesquisar documentos por texto extraído via OCR"""
+    """View para pesquisar documentos por texto extraído via OCR e metadados"""
     
     query = request.GET.get('q', '').strip()
-    documentos = Documento.objects.all()
+    tipo_id = request.GET.get('tipo', '')
+    depto_id = request.GET.get('departamento', '')
+    data_inicio = request.GET.get('data_inicio', '')
+    data_fim = request.GET.get('data_fim', '')
+    
+    documentos = Documento.objects.all().select_related('tipo_documento', 'departamento', 'caixa')
     
     if query:
         documentos = documentos.filter(
             Q(texto_extraido__icontains=query) |
             Q(nome__icontains=query) |
             Q(numero_documento__icontains=query) |
-            Q(tipo_documento__nome__icontains=query)
-        ).select_related('tipo_documento', 'departamento', 'caixa')
+            Q(palavra_chave__icontains=query)
+        )
+    
+    if tipo_id:
+        documentos = documentos.filter(tipo_documento_id=tipo_id)
+        
+    if depto_id:
+        documentos = documentos.filter(departamento_id=depto_id)
+        
+    if data_inicio:
+        documentos = documentos.filter(data_documento__gte=data_inicio)
+        
+    if data_fim:
+        documentos = documentos.filter(data_documento__lte=data_fim)
+        
+    documentos = documentos.order_by('-data_upload')
     
     # Paginação
     paginator = Paginator(documentos, 20)
@@ -676,8 +700,12 @@ def pesquisar_documentos(request):
     context = {
         'titulo': 'Pesquisa de Documentos',
         'documentos': page_obj,
+        'page_obj': page_obj,  # Template usa page_obj para paginação
+        'is_paginated': page_obj.has_other_pages(),
         'query': query,
-        'total_resultados': documentos.count() if query else 0,
+        'total_resultados': documentos.count(),
+        'tipos_documento': TipoDocumento.objects.all(),
+        'departamentos': Departamento.objects.all(),
     }
     
-    return render(request, 'documentos/pesquisar.html', context)
+    return render(request, 'admin/documentos_pesquisar.html', context)

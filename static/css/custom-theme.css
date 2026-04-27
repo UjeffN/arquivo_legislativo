@@ -1,0 +1,93 @@
+/* Tema customizado para Câmara Municipal de Parauapebas */
+
+/* Cores institucionais */
+:root {
+    --camara-primary: #1e3a8a;
+    --camara-secondary: #dc2626;
+    --camara-accent: #f59e0b;
+    --camara-light: #f1f5f9;
+    --camara-dark: #1e293b;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, var(--camara-primary) 0%, var(--camara-secondary) 100%);
+    color: white;
+    padding: 60px 0;
+}
+
+.hero-section h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Cards de funcionalidades */
+.feature-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.feature-card .card-body {
+    padding: 30px;
+}
+
+.feature-card i {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+/* Badges personalizados */
+.badge-camara {
+    background-color: var(--camara-accent);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+/* Botões institucionais */
+.btn-camara {
+    background-color: var(--camara-primary);
+    border-color: var(--camara-primary);
+    color: white;
+    border-radius: 25px;
+    padding: 10px 25px;
+    font-weight: bold;
+}
+
+.btn-camara:hover {
+    background-color: var(--camara-dark);
+    border-color: var(--camara-dark);
+    color: white;
+}
+
+/* Animação shimmer */
+.shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .feature-card .card-body {
+        padding: 20px;
+    }
+}

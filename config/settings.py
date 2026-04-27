@@ -1,3 +1,4 @@
+
 """
 Configurações do Sistema de Arquivo Digital - Câmara Municipal de Parauapebas
 """
@@ -16,12 +17,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-chave-padrao-mudar-em-producao')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 # Configuração de path (lido do .env)
 USE_X_FORWARDED_HOST = True
+FORCE_SCRIPT_NAME = '/arquivo'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.20', 'sistemas.parauapebas.pa.leg.br']
+# Configuração de redirecionamento de login/logout
+LOGIN_REDIRECT_URL = '/arquivo/'
+LOGOUT_REDIRECT_URL = '/arquivo/accounts/login/'
+LOGIN_URL = '/arquivo/accounts/login/'
+LOGOUT_URL = '/arquivo/accounts/logout/'
+
+ALLOWED_HOSTS = ['192.168.1.20', 'sistemas.parauapebas.pa.leg.br']
+
+# Configurações de CSRF para produção (Proxy Reverso)
+CSRF_TRUSTED_ORIGINS = [
+    'https://sistemas.parauapebas.pa.leg.br',
+    'http://sistemas.parauapebas.pa.leg.br',
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -50,6 +64,15 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+# Configurações de Sessão
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 86400  # 24 horas em segundos
+SESSION_SAVE_EVERY_REQUEST = False
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # Mudar para True em produção com HTTPS
+SESSION_COOKIE_SAMESITE = None  # Permitir cookies em todos os contextos
+SESSION_COOKIE_DOMAIN = None  # Permitir todos os domínios permitidos
 
 TEMPLATES = [
     {
@@ -104,7 +127,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
-STATIC_URL = '/static/'
+STATIC_URL = '/arquivo/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
@@ -112,18 +135,16 @@ STATICFILES_DIRS = [
 
 # Media files (Uploads)
 # https://docs.djangoproject.com/en/4.2/howto/media-files/
-MEDIA_URL = '/media/'
+MEDIA_URL = '/arquivo/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Configurações de autenticação
-LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/accounts/login/'
-LOGOUT_URL = '/accounts/logout/'
+# Limites de Upload do Django
+DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500MB
 
 # Configurações específicas do Sistema de Arquivo Digital
 ARQUIVO_DIGITAL_CONFIG = {
@@ -159,7 +180,7 @@ ARQUIVO_DIGITAL_CONFIG = {
     ],
     
     # Configurações de upload
-    'MAX_UPLOAD_SIZE': 50 * 1024 * 1024,  # 50MB por arquivo
+    'MAX_UPLOAD_SIZE': 500 * 1024 * 1024,  # 500MB por arquivo
     'ALLOWED_EXTENSIONS': ['.pdf'],
     
     # Configurações de OCR
@@ -178,6 +199,14 @@ SECURE_SSL_REDIRECT = False  # Nginx já faz o redirecionamento
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
+
+# Cookies de segurança (habilitar apenas se usar HTTPS)
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Headers de segurança
 SECURE_BROWSER_XSS_FILTER = True
