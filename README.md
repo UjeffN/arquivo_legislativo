@@ -261,14 +261,6 @@ which tesseract
 tesseract --version
 ```
 
-## 📞 Suporte
-
-Para suporte ou dúvidas:
-- Verificar logs em `/opt/sistema_arquivos/arquivo_digital/logs/`
-- Status do serviço: `sudo systemctl status arquivo_digital`
-- Documentação Django: https://docs.djangoproject.com/
-
----
 
 **Última atualização:** 23/04/2026  
 **Versão:** 1.0 (Produção)  
