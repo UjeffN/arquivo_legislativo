@@ -1,0 +1,248 @@
+{% extends 'layouts/painel.html' %}
+{% load querystring_tags %}
+
+{% block title %}Categorias de Documento - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <div class="flex items-center justify-between gap-4">
+        <div>
+            <h1 class="page-title">Categorias de Documento</h1>
+            <p class="page-description">Gerencie as categorias usadas na classificacao e mantenha o historico dos documentos preservado.</p>
+        </div>
+        {% if perms.documentos.add_tipodocumento %}
+            <a href="{% url 'documentos:categorias_criar' %}" class="btn btn-primary">
+                <i class="fas fa-plus mr-2"></i>
+                Nova Categoria
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card fade-in mb-6">
+    <div class="card-body">
+        <form method="get" class="categorias-filtros">
+            <div class="form-group">
+                <label class="form-label">Buscar</label>
+                <input type="text" name="q" value="{{ filtros.q }}" class="form-control" placeholder="Nome ou descricao da categoria">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-control">
+                    <option value="">Todas</option>
+                    <option value="ativas" {% if filtros.status == 'ativas' %}selected{% endif %}>Ativas</option>
+                    <option value="inativas" {% if filtros.status == 'inativas' %}selected{% endif %}>Inativas</option>
+                </select>
+            </div>
+            <div class="categorias-filtros-acoes">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search mr-2"></i>
+                    Filtrar
+                </button>
+                <a href="{% url 'documentos:categorias_listar' %}" class="btn btn-outline">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card fade-in">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-tags mr-2 text-blue-600"></i>
+            Categorias cadastradas
+        </h2>
+        <span class="text-sm text-gray-500">{{ total_categorias }} registro(s)</span>
+    </div>
+    <div class="card-body p-0">
+        {% if categorias.object_list %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Categoria</th>
+                            <th>Status</th>
+                            <th>Documentos vinculados</th>
+                            <th>Criada em</th>
+                            <th class="text-right">Acoes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for categoria in categorias %}
+                            <tr data-href="{% url 'documentos:categorias_editar' categoria.id %}" tabindex="0">
+                                <td>
+                                    <div class="font-medium text-gray-900">{{ categoria.nome }}</div>
+                                    <div class="text-xs text-gray-500">{{ categoria.descricao|default:"Sem descricao cadastrada." }}</div>
+                                </td>
+                                <td>
+                                    {% if categoria.ativo %}
+                                        <span class="badge badge-success">Ativa</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">Inativa</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="font-medium text-gray-900">{{ categoria.total_documentos }}</span>
+                                    <div class="text-xs text-gray-500">Os documentos permanecem intactos mesmo se a categoria for inativada.</div>
+                                </td>
+                                <td>{{ categoria.criado_em|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <div class="flex justify-end gap-2">
+                                        {% if perms.documentos.change_tipodocumento %}
+                                            <a href="{% url 'documentos:categorias_editar' categoria.id %}" class="btn btn-sm btn-outline" title="Editar categoria">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% if perms.documentos.delete_tipodocumento and categoria.ativo %}
+                                            <a href="{% url 'documentos:categorias_excluir' categoria.id %}" class="btn btn-sm btn-danger" title="Inativar categoria">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-tags"></i>
+                <h3>Nenhuma categoria encontrada</h3>
+                <p>Cadastre uma nova categoria ou ajuste os filtros da busca.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if categorias.paginator.num_pages > 1 or categorias.paginator.count > 0 %}
+    <div class="pagination mt-6">
+        <span class="text-sm text-gray-500">
+            Mostrando {{ categorias.start_index }} a {{ categorias.end_index }} de {{ categorias.paginator.count }} categorias
+            {% if pagination_state.show_all_limited %}
+                <span class="text-gray-500">(limitado a {{ pagination_state.show_all_limit }})</span>
+            {% endif %}
+        </span>
+        {% if pagination_state.show_all %}
+            <a href="?{% querystring page='' per_page='' %}" class="btn btn-outline btn-sm">Voltar à paginação</a>
+        {% else %}
+            <a href="?{% querystring page='' per_page='all' %}" class="btn btn-outline btn-sm">Mostrar todos</a>
+            {% if categorias.has_previous %}
+                <a href="?{% querystring page=categorias.previous_page_number %}" class="btn btn-outline btn-sm">Anterior</a>
+            {% endif %}
+            {% if categorias.paginator.num_pages > 1 %}
+                <span class="text-sm text-gray-500">
+                    Página {{ categorias.number }} de {{ categorias.paginator.num_pages }}
+                </span>
+            {% endif %}
+            {% if categorias.has_next %}
+                <a href="?{% querystring page=categorias.next_page_number %}" class="btn btn-outline btn-sm">Próxima</a>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endif %}
+
+<style>
+.categorias-filtros {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 180px auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.categorias-filtros-acoes {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.table th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.text-right { text-align: right; }
+.justify-end { justify-content: flex-end; }
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mt-6 { margin-top: 1.5rem; }
+.mr-2 { margin-right: 0.5rem; }
+.p-0 { padding: 0; }
+.text-sm { font-size: 0.875rem; }
+.text-xs { font-size: 0.75rem; }
+.font-medium { font-weight: 500; }
+.text-gray-500 { color: #64748b; }
+.text-gray-900 { color: #1e293b; }
+.text-blue-600 { color: #2563eb; }
+
+.badge-secondary {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: #fff;
+    border-color: #dc2626;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    color: #fff;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: #64748b;
+}
+
+.empty-state i {
+    display: block;
+    margin-bottom: 1rem;
+    color: #cbd5e1;
+    font-size: 3rem;
+}
+
+.empty-state h3 {
+    margin-bottom: 0.5rem;
+    color: #1e293b;
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+@media (max-width: 900px) {
+    .categorias-filtros {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

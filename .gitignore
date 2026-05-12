@@ -5,20 +5,36 @@ __pycache__/
 *.so
 .Python
 venv/
+.venv/
 *.egg-info/
+*.egg
 
 # Django
 *.log
 db.sqlite3
 db.sqlite3-journal
 .env
+.env.*
+!.env.example
+logs/
+media/
+staticfiles/
+temp/
+db.sqlite3.backup
 
 # Temporários
 *.tmp
 *.bak
 test_file
+*.swp
 
 # IDE
 .vscode/
 .idea/
 
+# CI / cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/

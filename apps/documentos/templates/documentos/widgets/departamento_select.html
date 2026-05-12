@@ -1,4 +1,4 @@
-{% load i18n admin_static %}
+{% load i18n static %}
 <div class="departamento-select-wrapper">
     <select name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
     {% if widget.attrs.placeholder %}<option value="">{{ widget.attrs.placeholder }}</option>{% endif %}

@@ -1,267 +1,489 @@
-# Sistema de Arquivo Digital - Câmara Municipal de Parauapebas
+# Sistema de Arquivo Digital
 
-## 📋 Contexto do Sistema
+Sistema Django para gestão de documentos digitais e caixas físicas da Câmara Municipal de Parauapebas. O projeto permite cadastrar, importar, pesquisar, revisar e organizar documentos PDF, com OCR, auditoria, departamentos, categorias/tipos de documento, caixas, movimentações e ações em lote.
 
-O Departamento de Arquivo da Câmara Municipal utilizava anteriormente um sistema para registro e organização de documentos digitalizados. O sistema foi descontinuado após o cancelamento do contrato, impossibilitando o acesso às telas, formulários e estrutura anterior.
+## Sumário
 
-Diante disso, surgiu a necessidade de desenvolver um novo sistema interno para:
-- Armazenar documentos digitalizados
-- Registrar metadados
-- Organizar documentos de acordo com o armazenamento físico
-- Permitir pesquisa rápida
-- Gerar etiquetas para identificação das caixas físicas
+- [Visão geral](#visão-geral)
+- [Requisitos](#requisitos)
+- [Instalação em ambiente novo](#instalação-em-ambiente-novo)
+- [Configuração do `.env`](#configuração-do-env)
+- [Banco de dados, migrações e usuário administrador](#banco-de-dados-migrações-e-usuário-administrador)
+- [Arquivos estáticos, mídia e logs](#arquivos-estáticos-mídia-e-logs)
+- [Como executar](#como-executar)
+- [OCR e importação de PDFs](#ocr-e-importação-de-pdfs)
+- [Comandos úteis](#comandos-úteis)
+- [Testes e qualidade](#testes-e-qualidade)
+- [Deploy com Gunicorn, WhiteNoise e proxy reverso](#deploy-com-gunicorn-whitenoise-e-proxy-reverso)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Solução de problemas](#solução-de-problemas)
 
-## 🎯 Objetivo do Sistema
+## Visão geral
 
-Criar um Sistema de Arquivo Digital que permita:
-- Upload de documentos digitalizados
-- Registro de informações do documento
-- Organização por caixas físicas
-- Pesquisa avançada de documentos
-- Impressão de etiqueta para caixas
-- Automação do preenchimento de dados usando OCR
+Funcionalidades principais:
 
-## 🔄 Fluxo Atual do Departamento de Arquivo
+- Autenticação via Django e controle de permissões por app/modelo.
+- Dashboard administrativo.
+- Upload de documentos PDF com leitura de texto por OCR.
+- Confirmação/revisão de dados extraídos.
+- Listagem, pesquisa textual, filtros e paginação de documentos.
+- Download individual e download em lote.
+- Organização por departamentos, categorias/tipos e caixas físicas.
+- Movimentação de documentos entre caixas.
+- Histórico de movimentações.
+- Auditoria de operações críticas.
+- Importação em lote de PDFs existentes no servidor.
+- Geração de dados simulados para testes funcionais e de carga.
 
-Fluxo que o setor utiliza atualmente:
-1. Escanear o documento
-2. Salvar o PDF
-3. Subir o documento no sistema
-4. Preencher formulário com dados do documento
-5. Guardar o documento físico em uma caixa
+## Requisitos
 
-Organização física atual: Documentos são organizados por **CAIXAS**
+Versões recomendadas:
 
-## 🚀 Estado Atual do Sistema
+- Ubuntu/Debian recente.
+- Python 3.12.
+- SQLite 3 para o banco padrão.
+- Tesseract OCR com idioma português.
+- Git.
+- Acesso à internet no primeiro carregamento da interface, pois alguns templates usam CDNs para Tailwind, Font Awesome, jQuery e Bootstrap.
 
-### ✅ **FUNCIONALIDADES IMPLEMENTADAS:**
-- ✅ Django 4.2+ configurado e funcionando
-- ✅ Upload de documentos PDF
-- ✅ Registro de metadados
-- ✅ Organização por caixas físicas
-- ✅ Pesquisa de documentos
-- ✅ OCR com Tesseract
-- ✅ Geração de etiquetas (ReportLab)
-- ✅ Sistema em produção com HTTPS
-- ✅ Servidor configurado com Nginx + Gunicorn
+Pacotes de sistema no Ubuntu/Debian:
 
-### 🌐 **ACESSO AO SISTEMA:**
-- **HTTPS Seguro:** `https://192.168.1.20/admin/`
-- **Domínio:** `https://sistemas.parauapebas.pa.leg.br/admin/`
-- **HTTP:** Redireciona automaticamente para HTTPS
-
-## 🏗️ Estrutura do Projeto (ATUAL)
-
-```
-arquivo_digital/
-├── manage.py                     # Gerenciador Django
-├── requirements.txt              # Dependências Python
-├── .env                         # Variáveis de ambiente
-├── .gitignore                   # Arquivos ignorados no Git
-├── config/                      # Configurações Django
-│   ├── settings.py              # Configurações principais
-│   ├── urls.py                  # URLs do projeto
-│   └── wsgi.py                  # WSGI para produção
-├── apps/                        # Aplicações Django
-│   ├── core/                    # Sistema principal
-│   ├── documentos/              # Gestão de documentos
-│   ├── caixas/                  # Gestão de caixas
-│   └── departamentos/           # Departamentos
-├── services/                    # Lógica de negócio
-│   ├── ocr.py                   # Serviço OCR
-│   └── caixa_service.py         # Serviço de caixas
-├── staticfiles/                 # Arquivos estáticos (via Whitenoise)
-├── templates/                   # Templates HTML
-├── media/                       # Uploads de documentos
-├── logs/                        # Logs do sistema
-└── venv/                        # Ambiente virtual
-```
-
-## 🛠️ Tecnologias Utilizadas
-
-### **Backend:**
-- **Python 3.12+**
-- **Django 4.2+**
-- **SQLite** (banco de dados atual)
-- **Gunicorn** (servidor WSGI)
-- **Whitenoise** (servir estáticos)
-
-### **Automação:**
-- **Tesseract OCR** (extração de texto)
-- **pdfplumber** (processamento de PDF)
-- **Pillow** (processamento de imagem)
-- **ReportLab** (geração de etiquetas)
-
-### **Infraestrutura:**
-- **Nginx** (proxy reverso + SSL)
-- **Systemd** (gerenciamento de serviço)
-- **HTTPS** (certificado SSL autoassinado)
-- **python-dotenv** (variáveis de ambiente)
-
-## 🔧 Configuração de Produção
-
-### **Serviços Ativos:**
 ```bash
-# Serviço Django
-sudo systemctl status arquivo_digital
-
-# Servidor Nginx
-sudo systemctl status nginx
-
-# Portas ativas
-# 80  -> HTTP (redireciona para HTTPS)
-# 443 -> HTTPS (Nginx)
-# 8000 -> Django direto (interno)
+sudo apt update
+sudo apt install -y \
+  git \
+  python3 \
+  python3-venv \
+  python3-dev \
+  build-essential \
+  pkg-config \
+  sqlite3 \
+  tesseract-ocr \
+  tesseract-ocr-por \
+  poppler-utils \
+  libjpeg-dev \
+  zlib1g-dev
 ```
 
-### **Variáveis de Ambiente (.env):**
+Observações:
+
+- `tesseract-ocr-por` é necessário para OCR em português (`lang='por'`).
+- `poppler-utils` ajuda no ecossistema de PDFs e diagnóstico, embora a extração principal use `pdfplumber`.
+- O projeto usa SQLite por padrão. Para PostgreSQL/MySQL seria necessário alterar `DATABASES` em `config/settings.py` e instalar o driver apropriado.
+
+## Instalação em ambiente novo
+
+Clone ou copie o projeto para o servidor:
+
 ```bash
-# Servidor
-HOST=192.168.1.20
-PORT=8000
-DEBUG=False
-
-# Domínio
-ALLOWED_HOSTS=192.168.1.20,sistemas.parauapebas.pa.leg.br
-DOMAIN_NAME=sistemas.parauapebas.pa.leg.br
-
-# Segurança
-SECRET_KEY=django-insecure-XXXXXXXXXXXXXXXX
+cd /opt
+git clone <URL_DO_REPOSITORIO> sistema_arquivos
+cd /opt/sistema_arquivos/arquivo_digital
 ```
 
-## 📦 Instalação e Deploy
+Crie e ative o ambiente virtual:
 
-### **1. Clonar o Projeto:**
-```bash
-git clone <repositório>
-cd arquivo_digital
-```
-
-### **2. Ambiente Virtual:**
 ```bash
 python3 -m venv venv
 source venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 ```
 
-### **3. Configurar Ambiente:**
+Se o projeto foi copiado sem Git, basta entrar na pasta que contém `manage.py` e executar os mesmos comandos de ambiente virtual.
+
+## Configuração do `.env`
+
+Crie o arquivo `.env` a partir do exemplo:
+
 ```bash
 cp .env.example .env
-# Editar .env com suas configurações
 ```
 
-### **4. Banco de Dados:**
+Gere uma `SECRET_KEY` segura:
+
 ```bash
-python manage.py makemigrations
+python - <<'PY'
+from django.core.management.utils import get_random_secret_key
+print(get_random_secret_key())
+PY
+```
+
+Edite o `.env`:
+
+```bash
+nano .env
+```
+
+Variáveis usadas pelo projeto:
+
+| Variável | Obrigatória | Exemplo | Uso |
+|---|---:|---|---|
+| `SECRET_KEY` | Sim | `uma-chave-longa` | Chave criptográfica do Django. Nunca versionar. |
+| `DEBUG` | Não | `True` ou `False` | Modo de debug. Use `False` em produção. |
+| `ALLOWED_HOSTS` | Sim | `localhost,127.0.0.1` | Hosts aceitos pelo Django. |
+| `CSRF_TRUSTED_ORIGINS` | Não | `https://dominio.gov.br` | Origens HTTPS confiáveis para POST. |
+| `FORCE_SCRIPT_NAME` | Não | `/arquivo` | Prefixo da aplicação quando publicada em subcaminho. |
+| `USE_X_FORWARDED_HOST` | Não | `True` | Uso de headers do proxy. |
+| `SECURE_SSL_REDIRECT` | Não | `True` | Redirecionar HTTP para HTTPS. |
+| `SECURE_HSTS_SECONDS` | Não | `31536000` | HSTS em produção. |
+| `SECURE_HSTS_INCLUDE_SUBDOMAINS` | Não | `True` | HSTS para subdomínios. |
+| `SECURE_HSTS_PRELOAD` | Não | `True` | HSTS preload. |
+| `SECURE_REFERRER_POLICY` | Não | `same-origin` | Política do header Referrer-Policy. |
+
+Ambiente local com `runserver` direto:
+
+```dotenv
+SECRET_KEY=<sua-chave>
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+CSRF_TRUSTED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
+FORCE_SCRIPT_NAME=
+SECURE_SSL_REDIRECT=False
+USE_X_FORWARDED_HOST=False
+```
+
+Produção publicada em `https://sistemas.parauapebas.pa.leg.br/arquivo/`:
+
+```dotenv
+SECRET_KEY=<sua-chave-de-producao>
+DEBUG=False
+ALLOWED_HOSTS=sistemas.parauapebas.pa.leg.br
+CSRF_TRUSTED_ORIGINS=https://sistemas.parauapebas.pa.leg.br
+FORCE_SCRIPT_NAME=/arquivo
+SECURE_SSL_REDIRECT=True
+USE_X_FORWARDED_HOST=True
+SECURE_HSTS_SECONDS=31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+SECURE_HSTS_PRELOAD=True
+```
+
+## Banco de dados, migrações e usuário administrador
+
+O banco padrão é SQLite em:
+
+```text
+arquivo_digital/db.sqlite3
+```
+
+Em ambiente novo, crie as tabelas:
+
+```bash
 python manage.py migrate
+```
+
+Crie um superusuário pelo comando padrão:
+
+```bash
 python manage.py createsuperuser
 ```
 
-### **5. Coletar Estáticos:**
+Ou use o script do projeto:
+
+```bash
+DJANGO_SUPERUSER_PASSWORD='senha-forte-aqui' \
+python criar_admin.py --username admin --email admin@example.com
+```
+
+Depois, acesse o Admin:
+
+- Local sem prefixo: `http://127.0.0.1:8000/admin/`
+- Produção com prefixo: `https://sistemas.parauapebas.pa.leg.br/arquivo/admin/`
+
+Permissões:
+
+- Usuários comuns precisam receber permissões Django (`view`, `add`, `change`, `delete`) nos modelos de documentos, caixas, departamentos e tipos.
+- O superusuário acessa todas as telas.
+
+## Arquivos estáticos, mídia e logs
+
+Diretórios importantes:
+
+```text
+static/       arquivos CSS/JS/imagens mantidos no projeto
+staticfiles/  saída do collectstatic em produção
+media/        uploads de documentos PDF
+logs/         logs do Django e auditoria
+temp/         arquivos temporários, incluindo downloads em lote
+```
+
+Crie diretórios esperados se necessário:
+
+```bash
+mkdir -p logs media staticfiles temp
+```
+
+Em produção, colete estáticos:
+
 ```bash
 python manage.py collectstatic --noinput
 ```
 
-### **6. Instalar Serviço:**
+O projeto usa WhiteNoise quando `DEBUG=False`, então os estáticos podem ser servidos pelo próprio Django/Gunicorn. Em instalações com Nginx, também é possível servir `staticfiles/` diretamente pelo proxy.
+
+## Como executar
+
+Desenvolvimento local:
+
 ```bash
-sudo chmod +x scripts/install_service.sh
-sudo ./scripts/install_service.sh
+source venv/bin/activate
+python manage.py runserver 0.0.0.0:8000
 ```
 
-## 🔒 Segurança Implementada
+Acesse:
 
-### **✅ Medidas de Segurança:**
-- ✅ **SECRET_KEY** segura no .env
-- ✅ **DEBUG = False** em produção
-- ✅ **HTTPS** configurado com SSL
-- ✅ **Headers de segurança** (HSTS, XSS, etc)
-- ✅ **Permissões restritas** em arquivos sensíveis
-- ✅ **.env** no .gitignore
-
-### **🔐 Configurações de Segurança:**
-```python
-SECURE_SSL_REDIRECT = False  # Nginx já redireciona
-SECURE_HSTS_SECONDS = 31536000
-X_FRAME_OPTIONS = 'DENY'
-SECURE_CONTENT_TYPE_NOSNIFF = True
+```text
+http://127.0.0.1:8000/accounts/login/
 ```
 
-## 📊 Fluxo de Trabalho do Sistema
+Se `FORCE_SCRIPT_NAME=/arquivo`, a aplicação deve estar atrás de um proxy que publique o subcaminho `/arquivo`. Para rodar diretamente pelo `runserver`, deixe `FORCE_SCRIPT_NAME=` no `.env`.
 
-### **Fluxo Ideal:**
-1. **Escanear documento** → PDF
-2. **Upload no sistema** → OCR automático
-3. **Extração automática:**
-   - Tipo de documento
-   - Número
-   - Data
-   - Assunto
-4. **Formulário preenchido** → Usuário revisa
-5. **Vincular à caixa física** → Salvar
-6. **Pesquisa rápida** → Visualizar PDF
+Produção com Gunicorn:
 
-### **Organização Física:**
-```
-Caixa 01
-├── Portaria 12/2023
-├── Lei 55/2023
-└── Memorando 04/2023
-
-Caixa 02
-├── Portaria 101/2024
-└── Moção 15/2024
-```
-
-## 🎯 MVP - Funcionalidades Mínimas
-
-### **✅ Já Implementadas:**
-1. ✅ Upload de documento PDF
-2. ✅ Cadastro de metadados
-3. ✅ Organização por caixas
-4. ✅ Pesquisa simples
-5. ✅ Visualização do PDF
-6. ✅ OCR básico
-7. ✅ Geração de etiquetas
-
-### **🔮 Funcionalidades Futuras:**
-- OCR completo e avançado
-- Busca por texto dentro do documento
-- QR Code nas caixas
-- Relatórios estatísticos
-- Controle de empréstimo de documentos
-- Histórico de alterações
-- Integração com outros sistemas
-
-## 🐛 Troubleshooting
-
-### **Problemas Comuns:**
-
-#### **Serviço não inicia:**
 ```bash
-sudo systemctl status arquivo_digital
-sudo journalctl -u arquivo_digital -f
+source venv/bin/activate
+gunicorn config.wsgi:application \
+  --bind 127.0.0.1:8001 \
+  --workers 3 \
+  --timeout 120
 ```
 
-#### **HTTPS não funciona:**
-```bash
-sudo nginx -t
-sudo systemctl reload nginx
-```
+## OCR e importação de PDFs
 
-#### **Permissões de arquivos:**
-```bash
-sudo chown -R www-data:www-data media/ staticfiles/ logs/
-sudo chmod 640 .env db.sqlite3
-```
+O serviço de OCR fica em `services/ocr.py`.
 
-#### **OCR não funciona:**
+Fluxo:
+
+1. Tenta extrair texto diretamente do PDF com `pdfplumber`.
+2. Se não houver texto, tenta OCR da imagem com `pytesseract` e idioma `por`.
+3. O texto extraído é analisado para sugerir tipo, número, ano, data e assunto.
+
+Teste rápido do Tesseract:
+
 ```bash
-# Verificar se Tesseract está instalado
-which tesseract
 tesseract --version
+tesseract --list-langs | grep por
 ```
 
+Importar PDFs existentes:
 
-**Última atualização:** 23/04/2026  
-**Versão:** 1.0 (Produção)  
-**Status:** ✅ Funcionando
+```bash
+python manage.py importar_pdfs_ocr \
+  --root /caminho/para/pdfs \
+  --recursive \
+  --csv-relatorio relatorio_importacao_documentos.csv \
+  --caixa-numero 1 \
+  --tipo-nome IMPORTADO \
+  --departamento-nome IMPORTACAO
+```
+
+Simular antes de gravar:
+
+```bash
+python manage.py importar_pdfs_ocr --root /caminho/para/pdfs --recursive --dry-run
+```
+
+Processar em lotes:
+
+```bash
+python manage.py importar_pdfs_ocr --root /caminho/para/pdfs --recursive --offset 0 --limit 100
+python manage.py importar_pdfs_ocr --root /caminho/para/pdfs --recursive --offset 100 --limit 100
+```
+
+## Comandos úteis
+
+Verificar configuração:
+
+```bash
+python manage.py check
+```
+
+Criar dados simulados:
+
+```bash
+python manage.py gerar_dados_teste --usuarios 20 --caixas 100 --documentos 5000 --seed 42
+```
+
+Limpar downloads temporários:
+
+```bash
+python manage.py limpar_downloads_temporarios --idade-horas 24
+```
+
+Abrir shell Django:
+
+```bash
+python manage.py shell
+```
+
+Criar migrações após alterar modelos:
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+## Testes e qualidade
+
+Rodar todos os testes:
+
+```bash
+python manage.py test
+```
+
+Rodar testes por app:
+
+```bash
+python manage.py test apps.documentos
+python manage.py test apps.caixas
+python manage.py test apps.departamentos
+python manage.py test apps.auditoria
+```
+
+Testes úteis já usados no projeto:
+
+```bash
+python manage.py test apps.core.tests_sidebar
+python manage.py test apps.documentos.tests.MovimentacaoDocumentosLoteTests
+```
+
+Formatação e lint:
+
+```bash
+black .
+flake8 .
+```
+
+Configuração do Black está em `pyproject.toml` na raiz superior do workspace.
+
+## Deploy com Gunicorn, WhiteNoise e proxy reverso
+
+Exemplo de serviço systemd:
+
+```ini
+[Unit]
+Description=Arquivo Digital Gunicorn
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/sistema_arquivos/arquivo_digital
+EnvironmentFile=/opt/sistema_arquivos/arquivo_digital/.env
+ExecStart=/opt/sistema_arquivos/arquivo_digital/venv/bin/gunicorn config.wsgi:application --bind 127.0.0.1:8001 --workers 3 --timeout 120
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Exemplo de Nginx publicando em `/arquivo/`:
+
+```nginx
+location /arquivo/static/ {
+    alias /opt/sistema_arquivos/arquivo_digital/staticfiles/;
+}
+
+location /arquivo/media/ {
+    alias /opt/sistema_arquivos/arquivo_digital/media/;
+}
+
+location /arquivo/ {
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Script-Name /arquivo;
+    proxy_pass http://127.0.0.1:8001/;
+}
+```
+
+Checklist de deploy:
+
+```bash
+source venv/bin/activate
+python manage.py check
+python manage.py migrate
+python manage.py collectstatic --noinput
+python manage.py test apps.documentos apps.caixas apps.departamentos apps.auditoria
+```
+
+Depois reinicie o serviço:
+
+```bash
+sudo systemctl restart arquivo-digital
+sudo systemctl status arquivo-digital
+```
+
+## Estrutura do projeto
+
+```text
+arquivo_digital/
+├── apps/
+│   ├── auditoria/       logs, retenção, estatísticas e alertas
+│   ├── caixas/          caixas físicas e movimentações
+│   ├── core/            dashboard, layout, helpers e template tags
+│   ├── departamentos/   departamentos organizacionais
+│   └── documentos/      upload, OCR, pesquisa, categorias e downloads
+├── config/              settings, URLs e WSGI
+├── docs/                documentação auxiliar de testes e segurança
+├── media/               PDFs enviados pelos usuários
+├── services/            serviços compartilhados de OCR e caixas
+├── static/              CSS/JS/imagens do sistema
+├── staticfiles/         arquivos coletados para produção
+├── templates/           templates HTML
+├── tests/               testes de carga/performance
+├── manage.py
+├── requirements.txt
+└── .env.example
+```
+
+## Solução de problemas
+
+Erro `SECRET_KEY deve ser definida no ambiente`:
+
+- Crie o `.env`.
+- Defina `SECRET_KEY`.
+- Execute comandos a partir da pasta que contém `manage.py`.
+
+Erro `ALLOWED_HOSTS é obrigatória`:
+
+- Defina `ALLOWED_HOSTS` no `.env`, separado por vírgulas.
+
+CSS/JS não carregam:
+
+- Em desenvolvimento, confira `DEBUG=True`.
+- Em produção, rode `python manage.py collectstatic --noinput`.
+- Verifique `FORCE_SCRIPT_NAME`, `STATIC_URL` e a configuração do proxy.
+
+Login redireciona para caminho errado:
+
+- Se estiver rodando direto com `runserver`, use `FORCE_SCRIPT_NAME=`.
+- Se estiver em produção sob `/arquivo`, use `FORCE_SCRIPT_NAME=/arquivo` e publique a aplicação com proxy reverso nesse subcaminho.
+
+OCR não extrai texto:
+
+- Verifique `tesseract --version`.
+- Verifique `tesseract --list-langs | grep por`.
+- Confirme que o PDF não está corrompido.
+- PDFs com texto nativo usam `pdfplumber`; PDFs escaneados dependem do Tesseract.
+
+Uploads falham por permissão:
+
+- Garanta escrita em `media/`, `logs/`, `temp/` e `staticfiles/` para o usuário que executa o Gunicorn.
+
+Banco novo sem dados:
+
+- Execute `python manage.py migrate`.
+- Crie superusuário.
+- Cadastre categorias, departamentos e caixas, ou rode `gerar_dados_teste`.
+
+## Segurança operacional
+
+- Nunca versionar `.env`, `db.sqlite3`, `media/`, `logs/`, `temp/` ou `staticfiles/`.
+- Em produção, manter `DEBUG=False`.
+- Usar HTTPS no proxy reverso.
+- Fazer backup regular de `db.sqlite3` e `media/`.
+- Testar restauração de backup periodicamente.
+- Revisar permissões de usuários no Django Admin.

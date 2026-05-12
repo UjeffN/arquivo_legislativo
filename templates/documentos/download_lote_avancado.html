@@ -1,0 +1,553 @@
+{% extends "layouts/painel.html" %}
+{% load static %}
+
+{% block title %}Download em Lote - Sistema de Arquivo Digital{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Estilos específicos para download em lote seguindo padrão do admin */
+.download-lote-content {
+    padding: 2rem;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.download-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.documentos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.documento-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.documento-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.documento-card h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.4;
+}
+
+.documento-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.meta-item {
+    background: #f1f5f9;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.documento-status {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
+.documento-status.error {
+    background: var(--danger);
+}
+
+.progress-container {
+    display: none;
+    margin: 1.5rem 0;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 0.5rem;
+    background: #e2e8f0;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 0.25rem;
+}
+
+.progress-text {
+    text-align: center;
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+}
+
+.alert-error {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
+}
+
+.alert-warning {
+    background: #fffbeb;
+    border-color: #fed7aa;
+    color: #d97706;
+}
+
+.documentos-list {
+    max-height: 24rem;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    background: white;
+}
+
+.documento-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.documento-item:last-child {
+    border-bottom: none;
+}
+
+.documento-info {
+    flex: 1;
+    font-size: 0.875rem;
+}
+
+.documento-info strong {
+    color: var(--dark);
+    font-weight: 600;
+}
+
+.loading {
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid #f1f5f9;
+    border-top: 2px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .download-lote-content {
+        padding: 1rem;
+    }
+
+    .documentos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .download-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="download-lote-content fade-in">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-download text-blue-600 mr-3"></i>
+            Download em Lote de Documentos
+        </h1>
+        <p class="page-description">
+            Selecione múltiplos documentos e faça download em um único arquivo ZIP
+        </p>
+    </div>
+
+    <!-- Resumo dos Documentos -->
+    <div class="card mb-6">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+                Resumo dos Documentos Selecionados
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="download-stats-grid">
+                <div class="stat-card">
+                    <div class="text-3xl font-bold text-blue-600">{{ resumo.total_documentos }}</div>
+                    <div class="text-sm text-gray-600 mt-1">Total de Documentos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-3xl font-bold text-green-600">{{ resumo.total_arquivos }}</div>
+                    <div class="text-sm text-gray-600 mt-1">Arquivos para Download</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-3xl font-bold text-purple-600">{{ resumo.tamanho_total_mb }}MB</div>
+                    <div class="text-sm text-gray-600 mt-1">Tamanho Estimado</div>
+                </div>
+            </div>
+
+            {% if resumo.tipos %}
+            <div class="mt-6">
+                <h4 class="text-lg font-semibold text-gray-800 mb-3">Distribuição por Tipo:</h4>
+                <div class="documentos-list">
+                    {% for tipo, count in resumo.tipos.items %}
+                    <div class="documento-item">
+                        <div class="documento-info">
+                            <strong>{{ tipo }}</strong>: {{ count }} documento(s)
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Controles de Download -->
+    <div class="card mb-6">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-cog text-blue-600 mr-2"></i>
+                Configurações de Download
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label for="nome_arquivo" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nome do Arquivo ZIP:
+                    </label>
+                    <input type="text" id="nome_arquivo" class="form-control"
+                           placeholder="Ex: memorandos_2024"
+                           value="documentos_selecionados">
+                    <p class="text-sm text-gray-500 mt-1">
+                        O sistema adicionará automaticamente timestamp e quantidade de arquivos
+                    </p>
+                </div>
+
+                <div class="flex items-end">
+                    <button id="btn-download" class="btn btn-primary mr-3">
+                        <span id="btn-text">
+                            <i class="fas fa-download mr-2"></i>
+                            Iniciar Download
+                        </span>
+                        <span id="btn-loading" class="loading" style="display: none;"></span>
+                    </button>
+                    <a href="{% url 'documentos:listar' %}" class="btn btn-outline">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Voltar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-container" id="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="progress-text" id="progress-text">Preparando download...</div>
+            </div>
+
+            <!-- Alert Container -->
+            <div id="alert-container"></div>
+        </div>
+    </div>
+
+    <!-- Lista de Documentos -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-file-alt text-blue-600 mr-2"></i>
+                Documentos Selecionados
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="documentos-grid">
+                {% for doc in documentos %}
+                <div class="documento-card">
+                    <h4>{{ doc.nome }}</h4>
+                    <div class="documento-meta">
+                        <span class="meta-item">{{ doc.tipo_documento.nome }}</span>
+                        <span class="meta-item">{{ doc.departamento.nome|default:"Sem departamento" }}</span>
+                        <span class="meta-item">{{ doc.data_documento|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="flex items-center mt-3">
+                        {% if doc.arquivo_pdf %}
+                            <div class="documento-status" title="Arquivo disponível"></div>
+                            <span class="text-sm text-green-600 ml-2">Disponível</span>
+                        {% else %}
+                            <div class="documento-status error" title="Arquivo não encontrado"></div>
+                            <span class="text-sm text-red-600 ml-2">Não encontrado</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for POST -->
+<form id="download-form" method="POST" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="ids_documentos" value="{{ ids_documentos|join:',' }}">
+    <input type="hidden" name="nome_arquivo" id="form-nome-arquivo">
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class DownloadManager {
+    constructor() {
+        this.idsDocumentos = {{ ids_documentos|safe }};
+        this.isProcessing = false;
+        this.progressInterval = null;
+        this.cacheKey = null;
+
+        this.init();
+    }
+
+    init() {
+        // Event listeners
+        document.getElementById('btn-download').addEventListener('click', () => this.iniciarDownload());
+
+        // Auto-salvar nome do arquivo
+        document.getElementById('nome_arquivo').addEventListener('input', (e) => {
+            document.getElementById('form-nome-arquivo').value = e.target.value;
+        });
+
+        // Inicializar nome no formulário
+        document.getElementById('form-nome-arquivo').value = document.getElementById('nome_arquivo').value;
+    }
+
+    async iniciarDownload() {
+        if (this.isProcessing) return;
+
+        const nomeArquivo = document.getElementById('nome_arquivo').value.trim() || 'documentos_selecionados';
+
+        // Validar
+        if (!nomeArquivo) {
+            this.showAlert('Por favor, informe um nome para o arquivo ZIP.', 'warning');
+            return;
+        }
+
+        // Iniciar processo
+        this.isProcessing = true;
+        this.updateUI('processing');
+
+        try {
+            // Enviar requisição
+            const response = await fetch('/arquivo/documentos/download-lote-avancado/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    ids_documentos: this.idsDocumentos,
+                    nome_arquivo: nomeArquivo
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.sucesso) {
+                this.cacheKey = data.cache_key;
+                this.monitorarProgresso();
+            } else {
+                this.showAlert(data.erro || 'Erro ao iniciar download', 'error');
+                this.updateUI('error');
+            }
+
+        } catch (error) {
+            console.error('Erro:', error);
+            this.showAlert('Erro de conexão. Tente novamente.', 'error');
+            this.updateUI('error');
+        }
+    }
+
+    monitorarProgresso() {
+        if (!this.cacheKey) return;
+
+        this.progressInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/arquivo/documentos/download-progress/${this.cacheKey}/`);
+                const data = await response.json();
+
+                if (data.status === 'processing') {
+                    this.updateProgress(data.progress, data.message);
+                } else if (data.status === 'completed') {
+                    this.updateProgress(100, 'Download concluído!');
+                    this.downloadArquivo(data.download_url, data.stats.nome_zip);
+                    this.limparMonitoramento();
+                } else if (data.status === 'error') {
+                    this.showAlert(data.message || 'Erro no processamento', 'error');
+                    this.updateUI('error');
+                    this.limparMonitoramento();
+                } else if (data.status === 'not_found') {
+                    this.showAlert('Processamento não encontrado', 'error');
+                    this.updateUI('error');
+                    this.limparMonitoramento();
+                }
+
+            } catch (error) {
+                console.error('Erro no monitoramento:', error);
+                this.showAlert('Erro ao verificar progresso', 'error');
+                this.limparMonitoramento();
+            }
+        }, 1000); // Verificar a cada 1 segundo
+    }
+
+    updateProgress(percent, message) {
+        document.getElementById('progress-fill').style.width = percent + '%';
+        document.getElementById('progress-text').textContent = message;
+    }
+
+    async downloadArquivo(downloadUrl, nomeArquivo) {
+        try {
+            const response = await fetch(downloadUrl);
+            const blob = await response.blob();
+
+            // Criar link de download
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nomeArquivo;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            this.showAlert('Download iniciado com sucesso!', 'success');
+            this.updateUI('success');
+
+        } catch (error) {
+            console.error('Erro no download:', error);
+            this.showAlert('Erro ao baixar arquivo', 'error');
+            this.updateUI('error');
+        }
+    }
+
+    updateUI(state) {
+        const btn = document.getElementById('btn-download');
+        const btnText = document.getElementById('btn-text');
+        const btnLoading = document.getElementById('btn-loading');
+        const progressContainer = document.getElementById('progress-container');
+
+        switch (state) {
+            case 'processing':
+                btn.disabled = true;
+                btnText.style.display = 'none';
+                btnLoading.style.display = 'inline-block';
+                progressContainer.style.display = 'block';
+                break;
+
+            case 'success':
+                btn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
+                btnText.innerHTML = '<i class="fas fa-check mr-2"></i>Download Concluído';
+                setTimeout(() => {
+                    btnText.innerHTML = '<i class="fas fa-download mr-2"></i>Iniciar Download';
+                }, 3000);
+                break;
+
+            case 'error':
+                btn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
+                btnText.innerHTML = '<i class="fas fa-redo mr-2"></i>Tentar Novamente';
+                break;
+        }
+    }
+
+    showAlert(message, type) {
+        const container = document.getElementById('alert-container');
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type}`;
+        alert.textContent = message;
+
+        container.innerHTML = '';
+        container.appendChild(alert);
+
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.parentNode.removeChild(alert);
+            }
+        }, 5000);
+    }
+
+    limparMonitoramento() {
+        if (this.progressInterval) {
+            clearInterval(this.progressInterval);
+            this.progressInterval = null;
+        }
+        this.isProcessing = false;
+    }
+}
+
+// Inicializar quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', () => {
+    new DownloadManager();
+});
+
+// Limpar monitoramento ao sair da página
+window.addEventListener('beforeunload', () => {
+    if (window.downloadManager) {
+        window.downloadManager.limparMonitoramento();
+    }
+});
+</script>
+{% endblock %}

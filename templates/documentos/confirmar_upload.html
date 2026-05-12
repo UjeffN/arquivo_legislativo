@@ -1,88 +1,256 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends 'layouts/painel.html' %}
 
-{% block title %}{{ titulo }} - Sistema de Arquivo Digital{% endblock %}
+{% block title %}Confirmar Documento - Sistema de Arquivo Digital{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h4 class="mb-0">
-                        <i class="fas fa-file-alt"></i>
-                        {% if editando %}
-                            Editar Documento
-                        {% else %}
-                            Confirmar Dados do Documento
-                        {% endif %}
-                    </h4>
-                    {% if editando %}
-                        <div class="alert alert-info mt-2">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>Modo de Edição:</strong> Você está editando o documento "{{ documento_original.nome }}".
-                            <br>
-                            <small class="text-muted">Altere os dados necessários e confirme as alterações.</small>
-                        </div>
-                    {% endif %}
+<!-- Page Header -->
+<div class="page-header fade-in">
+    <h1 class="page-title">Confirmar Dados do Documento</h1>
+    <p class="page-description">Revise e ajuste as informações extraídas pelo OCR</p>
+</div>
+
+<div class="document-confirmation-layout">
+    <!-- Main Form -->
+    <div class="document-form-panel">
+        <div class="card fade-in" id="documentMainCard">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-check-circle mr-2 text-green-500"></i>
+                    Dados Extraídos pelo OCR
+                </h2>
+            </div>
+            <div class="card-body">
+                {% if editando %}
+                <div class="alert alert-warning mb-4">
+                    <i class="fas fa-edit mr-2"></i>
+                    <strong>Editando documento:</strong> {{ documento_original.nome }}
                 </div>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item">
-                            <a href="{% url 'core:home' %}">Início</a>
-                        </li>
-                        <li class="breadcrumb-item">
-                            <a href="{% url 'documentos:listar' %}">Documentos</a>
-                        </li>
-                        {% if editando %}
-                            <li class="breadcrumb-item">
-                                <a href="{% url 'documentos:detalhe' documento_original.id %}">{{ documento_original }}</a>
-                            </li>
-                            <li class="breadcrumb-item active">Editar</li>
-                        {% else %}
-                            <li class="breadcrumb-item">
-                                <a href="{% url 'documentos:upload' %}">Upload</a>
-                            </li>
-                            <li class="breadcrumb-item active">Confirmar</li>
+                {% endif %}
+
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+
+                    <!-- Document Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-file-alt mr-2"></i>
+                                Nome do Documento
+                            </label>
+                            {{ form.nome }}
+                            {% if form.nome.errors %}
+                                <div class="mt-2 text-red-500 text-sm">
+                                    {% for error in form.nome.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-hashtag mr-2"></i>
+                                Número do Documento
+                            </label>
+                            {{ form.numero_documento }}
+                            <p class="mt-2 text-xs text-gray-500" id="numeroDocumentoHelp">
+                                {{ form.numero_documento.help_text|default:"Preenchido automaticamente a partir do nome quando houver padrão 404/2024. Você pode editar manualmente." }}
+                            </p>
+                            {% if form.numero_documento.errors %}
+                                <div class="mt-2 text-red-500 text-sm">
+                                    {% for error in form.numero_documento.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Category and Department -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-tag mr-2"></i>
+                                Categoria do Documento
+                            </label>
+                            {{ form.tipo_documento }}
+                            {% if form.tipo_documento.errors %}
+                                <div class="mt-2 text-red-500 text-sm">
+                                    {% for error in form.tipo_documento.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-building mr-2"></i>
+                                Departamento
+                            </label>
+                            {{ form.departamento }}
+                            {% if form.departamento.errors %}
+                                <div class="mt-2 text-red-500 text-sm">
+                                    {% for error in form.departamento.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Caixa and Date -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-archive mr-2"></i>
+                                Caixa (Opcional)
+                            </label>
+                            {{ form.caixa }}
+                            {% if form.caixa.errors %}
+                                <div class="mt-2 text-red-500 text-sm">
+                                    {% for error in form.caixa.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-calendar mr-2"></i>
+                                Data do Documento
+                            </label>
+                            {{ form.data_documento }}
+                        {% if form.data_documento.errors %}
+                            <div class="mt-2 text-red-500 text-sm">
+                                {% for error in form.data_documento.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
                         {% endif %}
-                    </ol>
-                </nav>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-align-left mr-2"></i>
+                            Assunto
+                        </label>
+                        {{ form.assunto }}
+                        {% if form.assunto.errors %}
+                            <div class="mt-2 text-red-500 text-sm">
+                                {% for error in form.assunto.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Additional Fields -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-key mr-2"></i>
+                            Palavras-chave
+                        </label>
+                        {{ form.palavra_chave }}
+                        {% if form.palavra_chave.errors %}
+                            <div class="mt-2 text-red-500 text-sm">
+                                {% for error in form.palavra_chave.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-comment mr-2"></i>
+                            Observações
+                        </label>
+                        {{ form.observacao }}
+                        {% if form.observacao.errors %}
+                            <div class="mt-2 text-red-500 text-sm">
+                                {% for error in form.observacao.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- OCR Info -->
+                    {% if dados_documento.ocr_preenchido %}
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fas fa-robot text-blue-600 text-xl"></i>
+                            <div>
+                                <h4 class="font-semibold text-blue-900">Informações do OCR</h4>
+                                <p class="text-sm text-blue-700">Confiança da extração: {{ dados_documento.confianca_ocr }}%</p>
+                            </div>
+                        </div>
+                        {% if dados_documento.texto_extraido %}
+                        <div class="mt-3">
+                            <p class="text-sm font-medium text-blue-900 mb-2">Texto Extraído:</p>
+                            <div class="bg-white rounded p-3 text-sm text-gray-700 max-h-32 overflow-y-auto">
+                                {{ dados_documento.texto_extraido|truncatewords:50 }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Submit Buttons -->
+                    <div class="flex gap-3 pt-4 border-t">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-2"></i>
+                            {% if editando %}Atualizar{% else %}Salvar{% endif %} Documento
+                        </button>
+                        <a href="{% url 'documentos:upload' %}" class="btn btn-outline">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Voltar
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
 
-    <!-- Barra de Progresso -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <div class="progress-step completed">
-                                <div class="step-circle">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div class="step-title">Upload Concluído</div>
-                                <div class="step-description">Arquivo recebido</div>
-                            </div>
+        <!-- OCR Status -->
+        <div class="card fade-in" id="ocrStatusCard">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-cog mr-2 text-gray-500"></i>
+                    Status do Processamento
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-check text-green-600 text-sm"></i>
                         </div>
-                        <div class="col-md-4 text-center">
-                            <div class="progress-step completed">
-                                <div class="step-circle">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div class="step-title">OCR Processado</div>
-                                <div class="step-description">Dados extraídos</div>
-                            </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Upload Concluído</p>
+                            <p class="text-xs text-gray-500">Arquivo recebido</p>
                         </div>
-                        <div class="col-md-4 text-center">
-                            <div class="progress-step active">
-                                <div class="step-circle">
-                                    <i class="fas fa-edit"></i>
-                                </div>
-                                <div class="step-title">Confirmação</div>
-                                <div class="step-description">Revise e salve</div>
-                            </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-check text-green-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">OCR Processado</p>
+                            <p class="text-xs text-gray-500">Texto extraído</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-edit text-blue-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Aguardando Confirmação</p>
+                            <p class="text-xs text-gray-500">Revise os dados</p>
                         </div>
                     </div>
                 </div>
@@ -90,774 +258,389 @@
         </div>
     </div>
 
-    <!-- Alerta de Confiança OCR -->
-    {% if confianca_ocr %}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="alert alert-info d-flex align-items-center" role="alert">
-                    <i class="fas fa-robot fa-2x me-3"></i>
-                    <div>
-                        <strong>Processamento OCR Concluído</strong><br>
-                        <small>Confiança da extração: <strong>{{ confianca_ocr }}%</strong>
-                        {% if confianca_ocr >= 80 %}
-                            <span class="badge bg-success ms-2">Alta</span>
-                        {% elif confianca_ocr >= 60 %}
-                            <span class="badge bg-warning ms-2">Média</span>
-                        {% else %}
-                            <span class="badge bg-danger ms-2">Baixa</span>
-                        {% endif %}
-                        </small>
+    <!-- Sidebar -->
+    <div class="document-preview-panel">
+        <div class="document-preview-stack">
+            <!-- Document Preview -->
+            {% if arquivo_preview %}
+            <div class="card fade-in document-preview-card" id="documentPreviewCard">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-pdf mr-2 text-red-500"></i>
+                        Prévia do Documento
+                    </h3>
+                    <div class="flex gap-2">
+                        <button onclick="expandPreview()" class="btn btn-sm btn-outline">
+                            <i class="fas fa-expand mr-1"></i>
+                            Ampliar
+                        </button>
+                        <button onclick="downloadPDF()" class="btn btn-sm btn-outline">
+                            <i class="fas fa-download mr-1"></i>
+                            Download
+                        </button>
                     </div>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-
-    <div class="row">
-        <div class="col-md-7">
-            <!-- Formulário de Confirmação -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-file-alt"></i>
-                        Dados do Documento
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-
-                    <form method="post" id="confirmForm">
-                        {% csrf_token %}
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.nome.id_for_label }}" class="form-label">
-                                        {{ form.nome.label }}
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.nome }}
-                                    {% if form.nome.help_text %}
-                                        <div class="form-text">{{ form.nome.help_text }}</div>
-                                    {% endif %}
-                                    {% if form.nome.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.nome.errors.0 }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.tipo_documento.id_for_label }}" class="form-label">
-                                        {{ form.tipo_documento.label }}
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.tipo_documento }}
-                                    {% if form.tipo_documento.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.tipo_documento.errors.0 }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.numero_documento.id_for_label }}" class="form-label">
-                                        {{ form.numero_documento.label }}
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.numero_documento }}
-                                    {% if form.numero_documento.help_text %}
-                                        <div class="form-text">{{ form.numero_documento.help_text }}</div>
-                                    {% endif %}
-                                    {% if form.numero_documento.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.numero_documento.errors.0 }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.data_documento.id_for_label }}" class="form-label">
-                                        {{ form.data_documento.label }}
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.data_documento }}
-                                    {% if form.data_documento.help_text %}
-                                        <div class="form-text">{{ form.data_documento.help_text }}</div>
-                                    {% endif %}
-                                    {% if form.data_documento.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.data_documento.errors.0 }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="{{ form.assunto.id_for_label }}" class="form-label">
-                                {{ form.assunto.label }}
-                                <span class="text-danger">*</span>
-                            </label>
-                            {{ form.assunto }}
-                            {% if form.assunto.help_text %}
-                                <div class="form-text">{{ form.assunto.help_text }}</div>
-                            {% endif %}
-                            {% if form.assunto.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.assunto.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.departamento.id_for_label }}" class="form-label">
-                                        {{ form.departamento.label }}
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.departamento }}
-                                    {% if form.departamento.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.departamento.errors.0 }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.caixa.id_for_label }}" class="form-label">
-                                        {{ form.caixa.label }}
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.caixa }}
-                                    {% if form.caixa.help_text %}
-                                        <div class="form-text">{{ form.caixa.help_text }}</div>
-                                    {% endif %}
-                                    {% if form.caixa.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.caixa.errors.0 }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.palavra_chave.id_for_label }}" class="form-label">
-                                        {{ form.palavra_chave.label }}
-                                    </label>
-                                    {{ form.palavra_chave }}
-                                    {% if form.palavra_chave.help_text %}
-                                        <div class="form-text">{{ form.palavra_chave.help_text }}</div>
-                                    {% endif %}
-                                    {% if form.palavra_chave.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.palavra_chave.errors.0 }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.confianca_ocr.id_for_label }}" class="form-label">
-                                        {{ form.confianca_ocr.label }}
-                                    </label>
-                                    {{ form.confianca_ocr }}
-                                    {% if form.confianca_ocr.help_text %}
-                                        <div class="form-text">{{ form.confianca_ocr.help_text }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="{{ form.observacao.id_for_label }}" class="form-label">
-                                {{ form.observacao.label }}
-                            </label>
-                            {{ form.observacao }}
-                            {% if form.observacao.help_text %}
-                                <div class="form-text">{{ form.observacao.help_text }}</div>
-                            {% endif %}
-                            {% if form.observacao.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.observacao.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="{{ form.texto_extraido.id_for_label }}" class="form-label">
-                                {{ form.texto_extraido.label }}
-                            </label>
-                            {{ form.texto_extraido }}
-                            {% if form.texto_extraido.help_text %}
-                                <div class="form-text">{{ form.texto_extraido.help_text }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{% url 'documentos:upload' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i>
-                                Voltar
-                            </a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save"></i>
-                                Salvar Documento
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-5">
-            <!-- Visualizador de PDF -->
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">
-                        <i class="fas fa-file-pdf"></i>
-                        Visualização do Documento
-                    </h6>
                 </div>
                 <div class="card-body p-0">
-                    <!-- Controles do Visualizador -->
-                    <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomOut">
-                                <i class="fas fa-search-minus"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomIn">
-                                <i class="fas fa-search-plus"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomReset">
-                                <i class="fas fa-compress"></i>
-                            </button>
-                        </div>
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="prevPage">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="nextPage">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
-                        <small class="text-muted">
-                            Página <span id="currentPage">1</span> de <span id="totalPages">1</span>
-                        </small>
-                    </div>
-                    
-                    <!-- Container do PDF -->
-                    <div id="pdfViewer" class="pdf-viewer-container" style="height: 600px; overflow: auto; background: #f8f9fa;">
-                        <div class="d-flex justify-content-center align-items-center h-100">
-                            <div class="text-center">
-                                <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
-                                <p class="text-muted">Carregando documento...</p>
+                    <div class="bg-gray-100 rounded-t-lg p-3 border-b">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700">{{ arquivo_original }}</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="zoomIn()" class="btn btn-xs btn-outline" title="Aumentar zoom">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                <button onclick="zoomOut()" class="btn btn-xs btn-outline" title="Diminuir zoom">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <button onclick="resetZoom()" class="btn btn-xs btn-outline" title="Resetar zoom">
+                                    <i class="fas fa-compress"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Canvas oculto para renderização -->
-                    <canvas id="pdfCanvas" style="display: none;"></canvas>
+                    <div class="relative bg-gray-50 document-preview-frame">
+                        <iframe
+                            src="{{ arquivo_preview }}"
+                            class="w-full h-full border-0"
+                            id="pdfPreview"
+                            style="transform: scale(1); transform-origin: top center;">
+                        </iframe>
+                    </div>
+                    <div class="bg-gray-100 rounded-b-lg p-3 border-t">
+                        <div class="flex items-center justify-between text-xs text-gray-500">
+                            <span>Use os botões de zoom para ajustar a visualização</span>
+                            <span id="zoomLevel">Zoom: 100%</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-                        </div>
+            {% endif %}
 
-    <!-- Dicas de Revisão -->
-    <div class="row mt-3">
-        <div class="col-12">
-            <div class="card">
+            <!-- Help -->
+            <div class="card fade-in" id="helpCard">
                 <div class="card-header">
-                    <h6 class="card-title mb-0">
-                        <i class="fas fa-lightbulb"></i>
-                        Dicas de Revisão
-                    </h6>
+                    <h3 class="card-title">
+                        <i class="fas fa-question-circle mr-2 text-blue-500"></i>
+                        Ajuda
+                    </h3>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <ul class="mb-0">
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success"></i>
-                                    <strong>Verifique os dados extraídos</strong> pelo OCR
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-search text-info"></i>
-                                    <strong>Use o visualizador</strong> para consultar o documento original
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <ul class="mb-0">
-                                <li class="mb-2">
-                                    <i class="fas fa-edit text-warning"></i>
-                                    <strong>Corrija se necessário</strong> os campos automaticamente preenchidos
-                                </li>
-                                <li>
-                                    <i class="fas fa-info-circle text-primary"></i>
-                                    <strong>Documentos antigos</strong> podem precisar de preenchimento manual
-                                </li>
-                            </ul>
-                        </div>
+                    <div class="space-y-3 text-sm text-gray-600">
+                        <p><strong>OCR:</strong> O sistema extraiu automaticamente as informações do documento.</p>
+                        <p><strong>Revisão:</strong> Verifique se todos os dados estão corretos.</p>
+                        <p><strong>Ajuste:</strong> Modifique qualquer informação que precise ser corrigida.</p>
+                        <p><strong>Salvar:</strong> Confirme para salvar o documento no sistema.</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
+<style>
+/* Additional styles for this page */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.document-confirmation-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.document-form-panel,
+.document-preview-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.document-preview-frame {
+    height: clamp(360px, 52vh, 620px);
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.document-preview-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.document-preview-card > .card-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.gap-3 { gap: 0.75rem; }
+.gap-6 { gap: 1.5rem; }
+.gap-8 { gap: 2rem; }
+
+.space-y-3 > * + * { margin-top: 0.75rem; }
+.space-y-6 > * + * { margin-top: 1.5rem; }
+
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 0.75rem; }
+.mt-4 { margin-top: 1rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.pt-4 { padding-top: 1rem; }
+
+.w-8 { width: 2rem; }
+.h-8 { height: 2rem; }
+.h-32 { height: 8rem; }
+
+.max-h-32 { max-height: 8rem; }
+
+.flex { display: flex; }
+.flex-1 { flex: 1 1 0%; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+
+.text-center { text-align: center; }
+
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+
+.text-gray-500 { color: #64748b; }
+.text-gray-600 { color: #475569; }
+.text-gray-700 { color: #374151; }
+.text-gray-900 { color: #1e293b; }
+
+.text-blue-600 { color: #2563eb; }
+.text-blue-700 { color: #1d4ed8; }
+.text-blue-900 { color: #1e3a8a; }
+.text-red-500 { color: #ef4444; }
+.text-green-600 { color: #10b981; }
+
+.bg-gray-100 { background-color: #f3f4f6; }
+.bg-blue-50 { background-color: #eff6ff; }
+.bg-green-100 { background-color: #ecfdf5; }
+
+.border { border-width: 1px; }
+.border-blue-200 { border-color: #bfdbfe; }
+.border-t { border-top-width: 1px; }
+
+.rounded { border-radius: 0.375rem; }
+.rounded-lg { border-radius: 0.5rem; }
+
+.overflow-y-auto { overflow-y: auto; }
+
+@media (min-width: 768px) {
+    .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+    .document-confirmation-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(400px, 44vw);
+    }
+
+    .lg\:col-span-1 { grid-column: span 1 / span 1; }
+    .lg\:col-span-2 { grid-column: span 2 / span 2; }
+    .lg\:col-span-3 { grid-column: span 3 / span 3; }
+}
+</style>
+
+<script>
+function syncDocumentPreviewCardHeight() {
+    const mainCard = document.getElementById('documentMainCard');
+    const previewCard = document.getElementById('documentPreviewCard');
+
+    if (!mainCard || !previewCard) {
+        return;
+    }
+
+    previewCard.style.height = '';
+
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+        previewCard.style.height = `${mainCard.getBoundingClientRect().height}px`;
+    }
+}
+
+function syncHelpCardHeight() {
+    const ocrStatusCard = document.getElementById('ocrStatusCard');
+    const helpCard = document.getElementById('helpCard');
+
+    if (!ocrStatusCard || !helpCard) {
+        return;
+    }
+
+    helpCard.style.height = '';
+
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+        helpCard.style.height = `${ocrStatusCard.getBoundingClientRect().height}px`;
+    }
+}
+
+function syncDocumentReviewCardHeights() {
+    syncDocumentPreviewCardHeight();
+    syncHelpCardHeight();
+}
+
+window.addEventListener('load', syncDocumentReviewCardHeights);
+window.addEventListener('resize', syncDocumentReviewCardHeights);
+
+if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(syncDocumentReviewCardHeights);
+}
+
+// PDF Preview Controls
+let currentZoom = 1;
+const zoomLevels = [0.5, 0.75, 1, 1.25, 1.5, 2];
+let currentZoomIndex = 2; // Start at 100%
+
+function zoomIn() {
+    if (currentZoomIndex < zoomLevels.length - 1) {
+        currentZoomIndex++;
+        currentZoom = zoomLevels[currentZoomIndex];
+        updateZoom();
+    }
+}
+
+function zoomOut() {
+    if (currentZoomIndex > 0) {
+        currentZoomIndex--;
+        currentZoom = zoomLevels[currentZoomIndex];
+        updateZoom();
+    }
+}
+
+function resetZoom() {
+    currentZoomIndex = 2; // Reset to 100%
+    currentZoom = zoomLevels[currentZoomIndex];
+    updateZoom();
+}
+
+function updateZoom() {
+    const iframe = document.getElementById('pdfPreview');
+    if (iframe) {
+        iframe.style.transform = `scale(${currentZoom})`;
+        iframe.style.transformOrigin = 'top center';
+        document.getElementById('zoomLevel').textContent = `Zoom: ${Math.round(currentZoom * 100)}%`;
+    }
+}
+
+function expandPreview() {
+    const iframe = document.getElementById('pdfPreview');
+    if (iframe && iframe.requestFullscreen) {
+        iframe.requestFullscreen();
+    } else if (iframe && iframe.webkitRequestFullscreen) {
+        iframe.webkitRequestFullscreen();
+    } else if (iframe && iframe.msRequestFullscreen) {
+        iframe.msRequestFullscreen();
+    }
+}
+
+function downloadPDF() {
+    const link = document.createElement('a');
+    link.href = '{{ arquivo_preview }}';
+    link.download = '{{ arquivo_original }}';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case '+':
+            case '=':
+                e.preventDefault();
+                zoomIn();
+                break;
+            case '-':
+                e.preventDefault();
+                zoomOut();
+                break;
+            case '0':
+                e.preventDefault();
+                resetZoom();
+                break;
+        }
+    }
+});
+
+// Mouse wheel zoom
+document.addEventListener('DOMContentLoaded', function() {
+    const nomeInput = document.getElementById('{{ form.nome.id_for_label }}');
+    const numeroInput = document.getElementById('{{ form.numero_documento.id_for_label }}');
+    const numeroHelp = document.getElementById('numeroDocumentoHelp');
+    let lastAutoFilledNumber = '';
+    let numeroEditadoManualmente = false;
+
+    function extrairNumeroDocumento(nomeDocumento) {
+        const match = (nomeDocumento || '').match(/\b[\wÀ-ÿ]+(?:\s+[\wÀ-ÿ]+)*\s+(\d{1,6}\/\d{4})\b/i);
+        return match ? match[1] : '';
+    }
+
+    function atualizarNumeroDocumento() {
+        if (!nomeInput || !numeroInput || numeroEditadoManualmente) {
+            return;
+        }
+
+        const numeroExtraido = extrairNumeroDocumento(nomeInput.value);
+        const numeroAtual = numeroInput.value.trim();
+        const numeroAtualTemAno = /^\d{1,6}\/\d{4}$/.test(numeroAtual);
+        const podeAtualizar = !numeroAtual || numeroAtual === lastAutoFilledNumber || !numeroAtualTemAno;
+
+        if (numeroExtraido && podeAtualizar) {
+            numeroInput.value = numeroExtraido;
+            lastAutoFilledNumber = numeroExtraido;
+            if (numeroHelp) {
+                numeroHelp.textContent = 'Número extraído automaticamente do nome. Você pode editar manualmente se necessário.';
+            }
+        }
+    }
+
+    if (nomeInput && numeroInput) {
+        lastAutoFilledNumber = extrairNumeroDocumento(nomeInput.value);
+
+        atualizarNumeroDocumento();
+
+        nomeInput.addEventListener('input', atualizarNumeroDocumento);
+        numeroInput.addEventListener('input', function() {
+            if (document.activeElement === numeroInput && numeroInput.value.trim() !== lastAutoFilledNumber) {
+                numeroEditadoManualmente = true;
+                if (numeroHelp) {
+                    numeroHelp.textContent = 'Número editado manualmente. Alterações no nome não substituirão este valor.';
+                }
+            }
+        });
+    }
+
+    const iframe = document.getElementById('pdfPreview');
+    if (iframe) {
+        iframe.addEventListener('wheel', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
 
 {% block extra_css %}
-<style>
-.progress-step.completed {
-    opacity: 1;
-}
-
-.progress-step.completed .step-circle {
-    background-color: #198754;
-    color: white;
-}
-
-.ocr-preenchido {
-    border-left: 4px solid #0d6efd;
-    background-color: #f8f9ff;
-}
-
-.form-label {
-    font-weight: 600;
-}
-
-.text-danger {
-    font-weight: bold;
-}
-
-/* Estilos do Visualizador de PDF */
-.pdf-viewer-container {
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    background: #f8f9fa;
-}
-
-.pdf-viewer-container img {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.btn-group .btn {
-    border-radius: 0.2rem;
-    font-size: 0.875rem;
-}
-
-.btn-group .btn:hover {
-    background-color: #e9ecef;
-}
-
-/* Responsividade */
-@media (max-width: 768px) {
-    .pdf-viewer-container {
-        height: 400px !important;
-    }
-    
-    .btn-group .btn {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-    }
-}
-
-/* Loading state */
-.pdf-viewer-container .fa-spinner {
-    color: #0d6efd;
-}
-
-/* Error state */
-.pdf-viewer-container .text-danger {
-    color: #dc3545 !important;
-}
-
-/* Page counter */
-.text-muted {
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-</style>
+{% load static %}
+<link rel="stylesheet" href="{% static 'documentos/css/select_autocomplete.css' %}">
 {% endblock %}
 
 {% block extra_js %}
-<!-- PDF.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-// Configurar PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-// Variáveis globais
-let pdfDoc = null;
-let pageNum = 1;
-let pageRendering = false;
-let pageNumPending = null;
-let scale = 1.0;
-let canvas = document.getElementById('pdfCanvas');
-let ctx = canvas.getContext('2d');
-
-// Dados do PDF em base64
-const pdfData = '{{ arquivo_preview|safe }}';
-
-/**
- * Renderiza a página do PDF
- */
-function renderPage(num) {
-    pageRendering = true;
-    
-    pdfDoc.getPage(num).then(function(page) {
-        const viewport = page.getViewport({scale: scale});
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        const renderContext = {
-            canvasContext: ctx,
-            viewport: viewport
-        };
-        
-        const renderTask = page.render(renderContext);
-
-        renderTask.promise.then(function() {
-            pageRendering = false;
-            
-            if (pageNumPending !== null) {
-                renderPage(pageNumPending);
-                pageNumPending = null;
-            }
-            
-            // Atualizar visualizador
-            updatePdfViewer();
-            
-            // Atualizar contador de páginas
-            document.getElementById('currentPage').textContent = num;
-        });
-    });
-}
-
-/**
- * Atualiza o visualizador com o canvas renderizado
- */
-function updatePdfViewer() {
-    const viewer = document.getElementById('pdfViewer');
-    const imgData = canvas.toDataURL();
-    
-    viewer.innerHTML = `
-        <div class="text-center p-3">
-            <img src="${imgData}" class="img-fluid" style="max-width: 100%; height: auto;" />
-        </div>
-    `;
-}
-
-/**
- * Enfileira a renderização da página
- */
-function queueRenderPage(num) {
-    if (pageRendering) {
-        pageNumPending = num;
-    } else {
-        renderPage(num);
-    }
-}
-
-/**
- * Navega para a página anterior
- */
-function onPrevPage() {
-    if (pageNum <= 1) {
-        return;
-    }
-    pageNum--;
-    queueRenderPage(pageNum);
-}
-
-/**
- * Navega para a próxima página
- */
-function onNextPage() {
-    if (pageNum >= pdfDoc.numPages) {
-        return;
-    }
-    pageNum++;
-    queueRenderPage(pageNum);
-}
-
-/**
- * Aumenta o zoom
- */
-function onZoomIn() {
-    scale = Math.min(scale * 1.2, 3.0);
-    queueRenderPage(pageNum);
-}
-
-/**
- * Diminui o zoom
- */
-function onZoomOut() {
-    scale = Math.max(scale / 1.2, 0.5);
-    queueRenderPage(pageNum);
-}
-
-/**
- * Reseta o zoom
- */
-function onZoomReset() {
-    scale = 1.0;
-    queueRenderPage(pageNum);
-}
-
-/**
- * Carrega o documento PDF
- */
-function loadPdf() {
-    // Debug: verificar o que foi recebido
-    console.log('PDF Data length:', pdfData ? pdfData.length : 'undefined');
-    console.log('PDF Data prefix:', pdfData ? pdfData.substring(0, 100) : 'undefined');
-    console.log('PDF Data type:', typeof pdfData);
-    
-    // Verificar se temos dados do PDF
-    if (!pdfData) {
-        document.getElementById('pdfViewer').innerHTML = `
-            <div class="text-center p-5">
-                <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
-                <p class="text-warning">Nenhum dado recebido</p>
-                <small class="text-muted">Verifique se o arquivo foi carregado corretamente</small>
-            </div>
-        `;
-        return;
-    }
-    
-    // Verificar formato do PDF (mais flexível)
-    const isPDF = pdfData.startsWith('data:application/pdf') || 
-                  pdfData.startsWith('data:application/octet-stream') ||
-                  pdfData.includes('application/pdf');
-    
-    if (!isPDF) {
-        document.getElementById('pdfViewer').innerHTML = `
-            <div class="text-center p-5">
-                <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
-                <p class="text-warning">Formato de arquivo inválido</p>
-                <small class="text-muted">Esperado: data:application/pdf</small>
-                <br><small class="text-muted">Recebido: ${pdfData.substring(0, 50)}...</small>
-            </div>
-        `;
-        return;
-    }
-    
-    // Converter base64 para Uint8Array
-    try {
-        const binaryString = atob(pdfData.split(',')[1]);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-        }
-        
-        // Carregar PDF
-        const loadingTask = pdfjsLib.getDocument({data: bytes});
-        
-        loadingTask.promise.then(function(pdf) {
-            pdfDoc = pdf;
-            document.getElementById('totalPages').textContent = pdf.numPages;
-            
-            // Renderizar primeira página
-            renderPage(pageNum);
-        }, function(reason) {
-            console.error('Erro ao carregar PDF:', reason);
-            document.getElementById('pdfViewer').innerHTML = `
-                <div class="text-center p-5">
-                    <i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i>
-                    <p class="text-danger">Erro ao carregar o documento PDF</p>
-                    <small class="text-muted">${reason}</small>
-                </div>
-            `;
-        });
-    } catch (error) {
-        console.error('Erro ao processar base64:', error);
-        document.getElementById('pdfViewer').innerHTML = `
-            <div class="text-center p-5">
-                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i>
-                <p class="text-danger">Erro ao processar o arquivo</p>
-                <small class="text-muted">${error.message}</small>
-            </div>
-        `;
-    }
-}
-
-// Event listeners
-document.getElementById('prevPage').addEventListener('click', onPrevPage);
-document.getElementById('nextPage').addEventListener('click', onNextPage);
-document.getElementById('zoomIn').addEventListener('click', onZoomIn);
-document.getElementById('zoomOut').addEventListener('click', onZoomOut);
-document.getElementById('zoomReset').addEventListener('click', onZoomReset);
-
-// Carregar PDF quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    loadPdf();
-    
-    // Destacar campos preenchidos pelo OCR
-    const ocrFields = document.querySelectorAll('.ocr-preenchido');
-    ocrFields.forEach(field => {
-        field.setAttribute('title', 'Preenchido automaticamente pelo OCR');
-    });
-
-    // REMOVIDO: Auto-formatar número do documento
-    // O cliente decide o formato final do número
-});
-</script>
-
-<!-- CSS do autocomplete -->
-<link rel="stylesheet" href="{% static 'documentos/css/select_autocomplete.css' %}">
-
-<style>
-/* Garantir que selects originais fiquem escondidos */
-.select-autocomplete {
-    display: none !important;
-    visibility: hidden !important;
-    position: absolute !important;
-    left: -9999px !important;
-}
-
-.select-autocomplete-wrapper + .select-autocomplete {
-    display: none !important;
-}
-</style>
-
-<!-- Script inline para garantir funcionamento -->
-<script>
-(function($) {
-    'use strict';
-    
-    // Função para transformar select em autocomplete
-    $.fn.selectAutocomplete = function() {
-        return this.each(function() {
-            var $select = $(this);
-            var $wrapper = $('<div class="select-autocomplete-wrapper"></div>');
-            var $input = $('<input type="text" class="form-control select-autocomplete-input">');
-            var $hidden = $('<input type="hidden" class="select-autocomplete-hidden">');
-            var $dropdown = $('<div class="select-autocomplete-dropdown" style="display: none;"></div>');
-            
-            // Configurar atributos
-            $input.attr('placeholder', 'Digite para buscar...');
-            $input.attr('id', $select.attr('id') + '_autocomplete');
-            $hidden.attr('name', $select.attr('name'));
-            $hidden.attr('id', $select.attr('id') + '_hidden');
-            
-            // Extrair opções do select
-            var options = [];
-            $select.find('option').each(function() {
-                var $option = $(this);
-                if ($option.val()) {
-                    options.push({
-                        value: $option.val(),
-                        text: $option.text(),
-                        selected: $option.is(':selected')
-                    });
-                }
-            });
-            
-            // Construir dropdown
-            options.forEach(function(option) {
-                var $item = $('<div class="select-autocomplete-item" data-value="' + option.value + '">' + 
-                             option.text + '</div>');
-                if (option.selected) {
-                    $input.val(option.text);
-                    $hidden.val(option.value);
-                    $item.addClass('selected');
-                }
-                $dropdown.append($item);
-            });
-            
-            // Substituir select pelo wrapper
-            $select.after($wrapper);
-            $wrapper.append($input).append($hidden).append($dropdown);
-            $select.remove();  // Remover completamente o select original
-            
-            // Funcionalidade de busca
-            $input.on('input', function() {
-                var searchTerm = $(this).val().toLowerCase();
-                var visibleCount = 0;
-                
-                $dropdown.find('.select-autocomplete-item').each(function() {
-                    var $item = $(this);
-                    var text = $item.text().toLowerCase();
-                    
-                    if (text.includes(searchTerm)) {
-                        $item.show();
-                        visibleCount++;
-                    } else {
-                        $item.hide();
-                    }
-                });
-                
-                // Mostrar/ocultar dropdown
-                if (searchTerm.length > 0 || visibleCount > 0) {
-                    $dropdown.show();
-                } else {
-                    $dropdown.hide();
-                }
-            });
-            
-            // Seleção de item
-            $dropdown.on('click', '.select-autocomplete-item', function() {
-                var $item = $(this);
-                $input.val($item.text());
-                $hidden.val($item.data('value'));
-                
-                // Atualizar estado visual
-                $dropdown.find('.select-autocomplete-item').removeClass('selected');
-                $item.addClass('selected');
-                
-                // Atualizar select original
-                $select.val($item.data('value'));
-                $select.trigger('change');
-                
-                $dropdown.hide();
-            });
-            
-            // Fechar dropdown ao clicar fora
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('.select-autocomplete-wrapper').length) {
-                    $dropdown.hide();
-                }
-            });
-            
-            // Mostrar dropdown ao focar
-            $input.on('focus', function() {
-                if ($(this).val().length === 0) {
-                    $dropdown.find('.select-autocomplete-item').show();
-                    $dropdown.show();
-                } else {
-                    $(this).trigger('input');
-                }
-            });
-        });
-    };
-    
-    // Inicializar quando o documento estiver pronto (com delay para evitar conflitos)
-    $(document).ready(function() {
-        setTimeout(function() {
-            $('.select-autocomplete').selectAutocomplete();
-        }, 100);
-    });
-    
-})(jQuery);
-</script>
-
+{% load static %}
+<script src="{% static 'documentos/js/select_autocomplete.js' %}"></script>
 {% endblock %}

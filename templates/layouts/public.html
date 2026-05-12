@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Arquivo Digital - Câmara Municipal de Parauapebas{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='12' y='6' width='40' height='52' rx='6' fill='%231d4ed8'/%3E%3Crect x='20' y='18' width='24' height='4' rx='2' fill='white'/%3E%3Crect x='20' y='27' width='24' height='4' rx='2' fill='white'/%3E%3Crect x='20' y='36' width='14' height='4' rx='2' fill='white'/%3E%3Crect x='36' y='36' width='8' height='12' rx='2' fill='%2393c5fd'/%3E%3C/svg%3E">
+
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    {% load static %}
+    <link href="{% static 'css/figma-theme.css' %}?v=20240427" rel="stylesheet">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-shell" id="appShell">
+        <aside class="app-sidebar" aria-label="Navegação principal">
+            <button class="sidebar-brand" type="button" id="sidebarToggle" aria-label="Expandir ou recolher menu" aria-expanded="true">
+                <span class="brand-icon"><i class="fas fa-file-invoice"></i></span>
+                <span class="brand-text">Sistema de Arquivo Digital</span>
+            </button>
+
+            <nav class="sidebar-nav">
+                <a class="sidebar-link" href="{% url 'core:home' %}" title="Início">
+                    <i class="fas fa-home"></i>
+                    <span>Início</span>
+                </a>
+                <a class="sidebar-link" href="{% url 'documentos:listar' %}" title="Listar Documentos">
+                    <i class="fas fa-list"></i>
+                    <span>Listar Documentos</span>
+                </a>
+                <a class="sidebar-link" href="{% url 'documentos:upload' %}" title="Upload de Documento">
+                    <i class="fas fa-upload"></i>
+                    <span>Upload de Documento</span>
+                </a>
+                <a class="sidebar-link" href="{% url 'caixas:listar_caixas' %}" title="Caixas">
+                    <i class="fas fa-archive"></i>
+                    <span>Caixas</span>
+                </a>
+                <a class="sidebar-link" href="#" title="Pesquisa">
+                    <i class="fas fa-search"></i>
+                    <span>Pesquisa</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                {% if user.is_authenticated %}
+                    <a class="sidebar-link" href="{% url 'admin:index' %}" title="Administração">
+                        <i class="fas fa-cog"></i>
+                        <span>Administração</span>
+                    </a>
+                    <form method="post" action="{% url 'custom_logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="sidebar-link sidebar-button" title="Sair">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sair</span>
+                        </button>
+                    </form>
+                {% else %}
+                    <a class="sidebar-link" href="{% url 'admin:index' %}" title="Entrar">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Entrar</span>
+                    </a>
+                {% endif %}
+            </div>
+        </aside>
+
+        <div class="app-main">
+            <header class="app-topbar">
+                <button class="btn btn-outline-primary btn-sm d-lg-none" type="button" id="mobileSidebarToggle" aria-label="Abrir menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="topbar-title">
+                    <i class="fas fa-file-invoice"></i>
+                    Câmara Municipal de Parauapebas
+                </div>
+                <div class="topbar-user">
+                    <i class="fas fa-user"></i>
+                    {% if user.is_authenticated %}
+                        {{ user.username }}
+                    {% else %}
+                        Usuário
+                    {% endif %}
+                </div>
+            </header>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="container-fluid mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="container-fluid py-4">
+        <div class="fade-in">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p class="mb-0">
+                <i class="fas fa-file-invoice"></i>
+                Câmara Municipal de Parauapebas - Sistema de Arquivo Digital
+            </p>
+        </div>
+    </footer>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>window.ARQUIVO_DIGITAL_PREFIX = "{{ request.META.SCRIPT_NAME|default:'' }}";</script>
+
+    <style>
+        :root {
+            --sidebar-expanded-width: 280px;
+            --sidebar-collapsed-width: 84px;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f4f7fb;
+        }
+
+        .app-shell {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: var(--sidebar-expanded-width) minmax(0, 1fr);
+            transition: grid-template-columns 0.2s ease;
+        }
+
+        .app-shell.sidebar-collapsed {
+            grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr);
+        }
+
+        .app-sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            background: linear-gradient(180deg, #0d47a1 0%, #0b2f6b 100%);
+            color: #fff;
+            z-index: 1030;
+            overflow-x: hidden;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            min-height: 52px;
+            padding: 0.75rem;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+            border: 0;
+            border-radius: 1rem;
+            font-weight: 700;
+            text-align: left;
+        }
+
+        .brand-icon,
+        .sidebar-link i {
+            width: 2rem;
+            min-width: 2rem;
+            text-align: center;
+        }
+
+        .brand-icon {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            height: 2rem;
+            border-radius: 0.75rem;
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .sidebar-nav,
+        .sidebar-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.8rem 0.75rem;
+            color: rgba(255, 255, 255, 0.86);
+            border: 0;
+            border-radius: 0.9rem;
+            background: transparent;
+            text-decoration: none;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .sidebar-link:hover,
+        .sidebar-link:focus {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .sidebar-button {
+            text-align: left;
+        }
+
+        .app-shell.sidebar-collapsed .brand-text,
+        .app-shell.sidebar-collapsed .sidebar-link span {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .app-main {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            min-height: 64px;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.94);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(10px);
+        }
+
+        .topbar-title,
+        .topbar-user {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        footer {
+            margin-top: auto;
+        }
+
+        @media (max-width: 991.98px) {
+            .app-shell,
+            .app-shell.sidebar-collapsed {
+                grid-template-columns: 1fr;
+            }
+
+            .app-sidebar {
+                position: fixed;
+                inset: 0 auto 0 0;
+                width: min(82vw, var(--sidebar-expanded-width));
+                transform: translateX(-100%);
+                transition: transform 0.2s ease;
+            }
+
+            .app-shell.sidebar-mobile-open .app-sidebar {
+                transform: translateX(0);
+            }
+
+            .app-shell.sidebar-mobile-open::after {
+                content: '';
+                position: fixed;
+                inset: 0;
+                background: rgba(15, 23, 42, 0.35);
+                z-index: 1025;
+            }
+
+            .app-shell.sidebar-collapsed .brand-text,
+            .app-shell.sidebar-collapsed .sidebar-link span {
+                opacity: 1;
+                width: auto;
+            }
+
+            .topbar-title {
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const appShell = document.getElementById('appShell');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+            const storageKey = 'arquivoDigitalSidebarCollapsed';
+
+            if (!appShell || !sidebarToggle) {
+                return;
+            }
+
+            if (localStorage.getItem(storageKey) === 'true') {
+                appShell.classList.add('sidebar-collapsed');
+                sidebarToggle.setAttribute('aria-expanded', 'false');
+            }
+
+            sidebarToggle.addEventListener('click', function() {
+                if (window.matchMedia('(max-width: 991.98px)').matches) {
+                    appShell.classList.toggle('sidebar-mobile-open');
+                    return;
+                }
+
+                appShell.classList.toggle('sidebar-collapsed');
+                const collapsed = appShell.classList.contains('sidebar-collapsed');
+                sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+                localStorage.setItem(storageKey, String(collapsed));
+            });
+
+            if (mobileSidebarToggle) {
+                mobileSidebarToggle.addEventListener('click', function() {
+                    appShell.classList.add('sidebar-mobile-open');
+                });
+            }
+
+            appShell.addEventListener('click', function(event) {
+                if (event.target === appShell && appShell.classList.contains('sidebar-mobile-open')) {
+                    appShell.classList.remove('sidebar-mobile-open');
+                }
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    appShell.classList.remove('sidebar-mobile-open');
+                }
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

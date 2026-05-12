@@ -42,9 +42,18 @@
     font-weight: bold;
 }
 
-/* Manter o select original escondido mas acessível */
-.select-autocomplete-wrapper + select {
-    display: none;
+/* Manter o select original escondido */
+select.select-autocomplete,
+.select-autocomplete-hidden {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 /* Estilo para quando não há resultados */

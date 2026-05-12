@@ -1,279 +1,203 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends 'layouts/painel.html' %}
 
 {% block title %}{{ titulo }} - Sistema de Arquivo Digital{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h4 class="mb-0">
-                        <i class="fas fa-archive"></i>
-                        {{ titulo }}
-                    </h4>
-                    <p class="text-muted mb-0">Informações detalhadas da caixa {{ caixa.numero }}</p>
+<div class="page-header fade-in">
+    <h1 class="page-title">Detalhes da Caixa {{ caixa.numero|stringformat:"04d" }}</h1>
+    <p class="page-description">Visão completa da caixa e seus documentos vinculados.</p>
+</div>
+
+<div class="flex items-center gap-2 mb-6 fade-in actions-top">
+    <a href="{% url 'caixas:listar_caixas' %}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i>
+        Voltar
+    </a>
+    <a href="{% url 'caixas:editar_caixa' caixa.pk %}" class="btn btn-outline">
+        <i class="fas fa-edit"></i>
+        Editar
+    </a>
+    <a href="{% url 'caixas:imprimir_etiqueta' caixa.pk %}" class="btn btn-primary" target="_blank" rel="noopener">
+        <i class="fas fa-print"></i>
+        Imprimir Etiqueta
+    </a>
+    <a href="{% url 'caixas:historico_movimentacoes' %}" class="btn btn-outline">
+        <i class="fas fa-clock-rotate-left"></i>
+        Histórico
+    </a>
+    <a href="{% url 'caixas:excluir_caixa' caixa.pk %}" class="btn btn-outline text-red-600">
+        <i class="fas fa-trash"></i>
+        Excluir Caixa
+    </a>
+</div>
+
+<div class="grid grid-cols-1 layout gap-6">
+    <div>
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                    Informações da Caixa
+                </h2>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-cols-1 md-grid-cols-2 gap-4">
+                    <div>
+                        <div class="label-muted">Número</div>
+                        <div class="text-main">Caixa {{ caixa.numero|stringformat:"04d" }}</div>
+                    </div>
+                    <div>
+                        <div class="label-muted">Nome</div>
+                        <div class="text-main">{{ caixa.nome }}</div>
+                    </div>
+                    <div>
+                        <div class="label-muted">Capacidade Máxima</div>
+                        <div class="text-main">{{ caixa.capacidade_maxima }} documentos</div>
+                    </div>
+                    <div>
+                        <div class="label-muted">Criado em</div>
+                        <div class="text-main">{{ caixa.criado_em|date:"d/m/Y H:i" }}</div>
+                    </div>
                 </div>
-                <div class="btn-group">
-                    <a href="{% url 'caixas:editar_caixa' caixa.pk %}" 
-                       class="btn btn-warning">
-                        <i class="fas fa-edit"></i>
-                        Editar
-                    </a>
-                    <a href="{% url 'caixas:imprimir_etiqueta' caixa.pk %}" 
-                       class="btn btn-info" target="_blank">
-                        <i class="fas fa-print"></i>
-                        Imprimir Etiqueta
-                    </a>
-                    <a href="{% url 'caixas:listar_caixas' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i>
-                        Voltar
-                    </a>
+
+                {% if caixa.localizacao_fisica %}
+                <div class="mt-4">
+                    <div class="label-muted">Localização Física</div>
+                    <div class="text-main">{{ caixa.localizacao_fisica }}</div>
                 </div>
+                {% endif %}
+
+                {% if caixa.descricao %}
+                <div class="mt-4">
+                    <div class="label-muted">Descrição</div>
+                    <div class="text-main">{{ caixa.descricao }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-6 fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-file-alt mr-2 text-gray-500"></i>
+                    Documentos da Caixa
+                    <span class="badge badge-primary ml-2">{{ total_documentos }}</span>
+                </h2>
+            </div>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tipo</th>
+                            <th>Data</th>
+                            <th>Upload</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documentos %}
+                        <tr data-href="{% url 'documentos:detalhe' doc.pk %}" tabindex="0">
+                            <td>{{ doc.nome }}</td>
+                            <td>{{ doc.tipo_documento.nome }}</td>
+                            <td>{{ doc.data_documento|date:"d/m/Y" }}</td>
+                            <td>{{ doc.data_upload|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <a href="{% url 'documentos:detalhe' doc.pk %}" class="btn btn-sm btn-outline" title="Visualizar">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'documentos:download' doc.pk %}" class="btn btn-sm btn-outline" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-gray-500">
+                                Nenhum documento vinculado a esta caixa.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-8">
-            <!-- Informações da Caixa -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-info-circle"></i>
-                        Informações da Caixa
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <table class="table table-borderless">
-                                <tr>
-                                    <td><strong>Número:</strong></td>
-                                    <td><span class="badge bg-primary">{{ caixa.numero }}</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Capacidade Máxima:</strong></td>
-                                    <td>{{ caixa.capacidade_maxima }} documentos</td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <table class="table table-borderless">
-                                <tr>
-                                    <td><strong>Departamento:</strong></td>
-                                    <td>{{ caixa.departamento.nome }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Tipo Documento:</strong></td>
-                                    <td>{{ caixa.tipo_documento.nome }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Período:</strong></td>
-                                    <td>{{ caixa.ano }}/{{ caixa.mes|floatformat:0 }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Capacidade:</strong></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2">{{ caixa.quantidade_documentos }}/{{ caixa.capacidade_maxima }}</span>
-                                            <div class="progress" style="height: 15px; width: 60px;">
-                                                <div class="progress-bar {% if caixa.percentual_ocupacao < 80 %}bg-success{% elif caixa.percentual_ocupacao < 100 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                                     style="width: {{ caixa.percentual_ocupacao }}%">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% if caixa.localizacao_fisica %}
-                                <tr>
-                                    <td><strong>Localização:</strong></td>
-                                    <td>{{ caixa.localizacao_fisica }}</td>
-                                </tr>
-                                {% endif %}
-                            </table>
-                        </div>
-                    </div>
-                    
-                    {% if caixa.descricao %}
-                    <div class="mt-3">
-                        <h6><strong>Descrição:</strong></h6>
-                        <p class="text-muted">{{ caixa.descricao }}</p>
-                    </div>
-                    {% endif %}
-                </div>
+    <div>
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-bar mr-2 text-green-500"></i>
+                    Estatísticas
+                </h2>
             </div>
-
-            <!-- Documentos na Caixa -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-file-alt"></i>
-                        Documentos na Caixa
-                        <span class="badge bg-info ms-2">{{ total_documentos }}</span>
-                    </h5>
-                    {% if caixa.status == "ABERTA" and caixa.quantidade_documentos < caixa.capacidade_maxima %}
-                        <a href="{% url 'documentos:upload' %}?caixa={{ caixa.pk }}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-plus"></i>
-                            Adicionar Documento
-                        </a>
-                    {% endif %}
+            <div class="card-body">
+                <div class="stat-line">
+                    <span class="label-muted">Documentos</span>
+                    <span class="text-main">{{ caixa.quantidade_documentos }}</span>
                 </div>
-                <div class="card-body">
-                    {% if documentos %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Nome</th>
-                                        <th>Tipo</th>
-                                        <th>Data</th>
-                                        <th>Upload</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for doc in documentos %}
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'documentos:detalhe' doc.pk %}">
-                                                {{ doc.nome }}
-                                            </a>
-                                        </td>
-                                        <td>{{ doc.tipo_documento.nome }}</td>
-                                        <td>{{ doc.data_documento|date:"d/m/Y" }}</td>
-                                        <td>{{ doc.data_upload|date:"d/m/Y H:i" }}</td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{% url 'documentos:detalhe' doc.pk %}" 
-                                                   class="btn btn-sm btn-outline-primary" title="Ver detalhes">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{% url 'documentos:download' doc.pk %}" 
-                                                   class="btn btn-sm btn-outline-success" title="Baixar PDF">
-                                                    <i class="fas fa-download"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        {% if total_documentos > 10 %}
-                        <div class="text-center mt-3">
-                            <a href="#" class="btn btn-outline-primary">
-                                Ver todos os {{ total_documentos }} documentos
-                            </a>
-                        </div>
-                        {% endif %}
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-file-alt fa-2x text-muted mb-3"></i>
-                            <h6 class="text-muted">Nenhum documento nesta caixa</h6>
-                            {% if caixa.status == "ABERTA" %}
-                                <p class="text-muted">Adicione documentos para começar a preencher esta caixa.</p>
-                                <a href="{% url 'documentos:upload' %}?caixa={{ caixa.pk }}" class="btn btn-primary">
-                                    <i class="fas fa-plus"></i>
-                                    Adicionar Primeiro Documento
-                                </a>
-                            {% else %}
-                                <p class="text-muted">Esta caixa está {{ caixa.get_status_display|lower }}.</p>
-                            {% endif %}
-                        </div>
-                    {% endif %}
+                <div class="stat-line">
+                    <span class="label-muted">Vagas Disponíveis</span>
+                    <span class="text-main">{{ caixa.vagas_disponiveis }}</span>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <!-- Ações Rápidas -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">
-                        <i class="fas fa-bolt"></i>
-                        Ações Rápidas
-                    </h6>
+                <div class="stat-line">
+                    <span class="label-muted">Ocupação</span>
+                    <span class="text-main">{{ caixa.percentual_ocupacao|floatformat:1 }}%</span>
                 </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{% url 'caixas:imprimir_etiqueta' caixa.pk %}" 
-                           class="btn btn-info" target="_blank">
-                            <i class="fas fa-print"></i>
-                            Imprimir Etiqueta
-                        </a>
-                        <a href="{% url 'caixas:editar_caixa' caixa.pk %}" class="btn btn-outline-primary">
-                            <i class="fas fa-edit"></i>
-                            Editar Informações
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Informações de Sistema -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">
-                        <i class="fas fa-cog"></i>
-                        Informações de Sistema
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <table class="table table-sm table-borderless">
-                        <tr>
-                            <td><strong>Criado em:</strong></td>
-                            <td>{{ caixa.criado_em|date:"d/m/Y H:i" }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Atualizado em:</strong></td>
-                            <td>{{ caixa.atualizado_em|date:"d/m/Y H:i" }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Caminho:</strong></td>
-                            <td><code>{{ caixa.caminho_pasta }}</code></td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Estatísticas -->
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">
-                        <i class="fas fa-chart-bar"></i>
-                        Estatísticas
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span>Ocupação</span>
-                            <span>{{ caixa.percentual_ocupacao|floatformat:1 }}%</span>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar {% if caixa.percentual_ocupacao < 80 %}bg-success{% elif caixa.percentual_ocupacao < 100 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                 style="width: {{ caixa.percentual_ocupacao }}%">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row text-center">
-                        <div class="col-6">
-                            <div class="border-end">
-                                <h5 class="text-primary">{{ caixa.quantidade_documentos }}</h5>
-                                <small class="text-muted">Documentos</small>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <h5 class="text-success">{{ caixa.vagas_disponiveis }}</h5>
-                            <small class="text-muted">Vagas</small>
-                        </div>
-                    </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div class="{% if caixa.percentual_ocupacao >= 100 %}bg-red-600{% elif caixa.percentual_ocupacao >= 80 %}bg-yellow-600{% else %}bg-green-600{% endif %} h-2 rounded-full" style="width: {{ caixa.percentual_ocupacao }}%"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.ml-2 { margin-left: 0.5rem; }
+.mr-2 { margin-right: 0.5rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-6 { margin-top: 1.5rem; }
+.h-2 { height: 0.5rem; }
+.w-full { width: 100%; }
+
+.flex { display: flex; }
+.items-center { align-items: center; }
+
+.text-center { text-align: center; }
+.text-gray-500 { color: #64748b; }
+.text-blue-500 { color: #3b82f6; }
+.text-green-500 { color: #10b981; }
+.text-gray-500 { color: #64748b; }
+.bg-gray-200 { background-color: #e5e7eb; }
+.bg-green-600 { background-color: #16a34a; }
+.bg-yellow-600 { background-color: #ca8a04; }
+.bg-red-600 { background-color: #dc2626; }
+.rounded-full { border-radius: 9999px; }
+
+.label-muted { color: #64748b; font-size: 0.875rem; margin-bottom: 0.25rem; display: block; }
+.text-main { color: #1e293b; font-weight: 500; }
+.stat-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+
+@media (min-width: 768px) {
+    .md-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+    .layout { grid-template-columns: 2fr 1fr; }
+}
+
+@media (max-width: 768px) {
+    .actions-top { flex-wrap: wrap; }
+}
+</style>
 {% endblock %}

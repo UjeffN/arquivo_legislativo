@@ -1,0 +1,941 @@
+{% extends 'layouts/painel.html' %}
+{% load querystring_tags %}
+
+{% block title %}Documentos - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1 class="page-title">Documentos</h1>
+    <p class="page-description">Listagem geral com filtros, paginação e ações rápidas.</p>
+</div>
+
+<div id="bulkDeleteModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="bulkDeleteModalTitle">
+    <div class="modal-card">
+        <h3 id="bulkDeleteModalTitle" class="modal-title">
+            <i class="fas fa-triangle-exclamation text-red-600 mr-2"></i>
+            Confirmar exclusão em lote
+        </h3>
+        <p class="modal-text">
+            Você está prestes a excluir <span id="bulkDeleteCount" class="font-medium">0</span> documento(s).
+            Esta ação não pode ser desfeita.
+        </p>
+        <div class="modal-actions">
+            <button type="button" id="bulkDeleteCancelBtn" class="btn btn-outline">Cancelar</button>
+            <button type="button" id="bulkDeleteConfirmBtn" class="btn btn-danger">
+                <i class="fas fa-trash"></i>
+                Confirmar Exclusão
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="bulkTransferModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="bulkTransferModalTitle">
+    <div class="modal-card">
+        <h3 id="bulkTransferModalTitle" class="modal-title">
+            <i class="fas fa-right-left text-blue-600 mr-2"></i>
+            Confirmar movimentação em lote
+        </h3>
+        <p class="modal-text">
+            A ação <span id="bulkTransferActionLabel" class="font-medium">Movimentar</span> será aplicada em
+            <span id="bulkTransferCount" class="font-medium">0</span> documento(s),
+            com destino para a caixa <span id="bulkTransferDestino" class="font-medium">-</span>.
+        </p>
+        <div class="modal-origin-list">
+            <p class="text-sm font-medium text-gray-700 mb-2">Caixas de origem selecionadas:</p>
+            <ul id="bulkTransferOrigens"></ul>
+        </div>
+        <div class="modal-actions">
+            <button type="button" id="bulkTransferCancelBtn" class="btn btn-outline">Cancelar</button>
+            <button type="button" id="bulkTransferConfirmBtn" class="btn btn-primary">
+                <i class="fas fa-check"></i>
+                Confirmar Movimentação
+            </button>
+        </div>
+    </div>
+</div>
+
+<!--<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 fade-in">
+    <div class="stat-card">
+        <div class="stat-icon primary">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-value">{{ documentos.paginator.count }}</div>
+        <div class="stat-label">Total de Documentos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon info">
+            <i class="fas fa-layer-group"></i>
+        </div>
+        <div class="stat-value">{{ documentos.number }}</div>
+        <div class="stat-label">Página Atual</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon success">
+            <i class="fas fa-list-ol"></i>
+        </div>
+        <div class="stat-value">{{ documentos|length }}</div>
+        <div class="stat-label">Itens Exibidos</div>
+    </div>
+</div>-->
+
+<div class="card mb-6 fade-in">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-filter mr-2 text-blue-500"></i>
+            Filtros e Ações
+        </h2>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{% url 'documentos:listar' %}" class="filters-grid">
+            <div class="input-group">
+                <i class="fas fa-search input-icon"></i>
+                <input type="text" name="search" value="{{ filtros.search }}" placeholder="Buscar documentos..." class="form-control input-with-icon">
+            </div>
+
+            <select name="tipo" class="form-control">
+                <option value="">Todos os tipos</option>
+                {% for t in tipos_documento %}
+                    <option value="{{ t.id }}" {% if filtros.tipo == t.id|stringformat:"s" %}selected{% endif %}>{{ t.nome }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="departamento" class="form-control">
+                <option value="">Todos os departamentos</option>
+                {% for d in departamentos %}
+                    <option value="{{ d.id }}" {% if filtros.departamento == d.id|stringformat:"s" %}selected{% endif %}>{{ d.nome }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="caixa" class="form-control">
+                <option value="">Todas as caixas</option>
+                {% for c in caixas %}
+                    <option value="{{ c.id }}" {% if filtros.caixa == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nome }}</option>
+                {% endfor %}
+            </select>
+
+            <input type="number" name="ano" value="{{ filtros.ano }}" placeholder="Ano" class="form-control" min="1900" max="2100">
+
+            <select name="per_page" class="form-control">
+                <option value="10" {% if filtros.per_page == '10' %}selected{% endif %}>10 por página</option>
+                <option value="20" {% if filtros.per_page == '20' or not filtros.per_page %}selected{% endif %}>20 por página</option>
+                <option value="50" {% if filtros.per_page == '50' %}selected{% endif %}>50 por página</option>
+                <option value="100" {% if filtros.per_page == '100' %}selected{% endif %}>100 por página</option>
+                <option value="all" {% if filtros.per_page == 'all' %}selected{% endif %}>Mostrar todos</option>
+            </select>
+
+            <div class="flex gap-2">
+                <button type="submit" class="btn btn-outline">
+                    <i class="fas fa-filter"></i>
+                    Filtrar
+                </button>
+                <a href="{% url 'documentos:listar' %}" class="btn btn-secondary">
+                    <i class="fas fa-rotate-left"></i>
+                    Limpar
+                </a>
+                <a href="{% url 'documentos:upload' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Novo Documento
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card fade-in">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-table mr-2 text-gray-500"></i>
+            Listagem de Documentos
+        </h2>
+    </div>
+    <form method="POST" action="{% url 'documentos:listar' %}" id="bulkActionsForm">
+        {% csrf_token %}
+        <input type="hidden" name="search" value="{{ filtros.search }}">
+        <input type="hidden" name="tipo" value="{{ filtros.tipo }}">
+        <input type="hidden" name="departamento" value="{{ filtros.departamento }}">
+        <input type="hidden" name="caixa" value="{{ filtros.caixa }}">
+        <input type="hidden" name="ano" value="{{ filtros.ano }}">
+        <input type="hidden" name="per_page" value="{{ filtros.per_page }}">
+        <input type="hidden" name="page" value="{{ documentos.number }}">
+
+        <div class="bulk-actions-bar">
+            <div class="text-sm text-gray-700">
+                Selecionados: <span id="selectedCount" class="font-medium">0</span>
+            </div>
+            <div class="bulk-actions-controls">
+                <div class="bulk-actions-buttons">
+                    <button type="button" class="btn btn-outline bulk-action-btn" data-action="download_lote" disabled>
+                        <i class="fas fa-download mr-2"></i>
+                        Download em Lote
+                    </button>
+                    <button type="button" class="btn btn-outline bulk-action-btn" data-action="mover_caixa" disabled>
+                        <i class="fas fa-right-left mr-2"></i>
+                        Mover para outra caixa
+                    </button>
+                    <button type="button" class="btn btn-outline bulk-action-btn" data-action="excluir" disabled>
+                        <i class="fas fa-trash mr-2"></i>
+                        Excluir selecionados
+                    </button>
+                </div>
+
+                <div class="bulk-actions-extra hidden" id="bulkActionsExtra">
+                    <select name="caixa_destino" id="bulkCaixaDestino" class="form-control">
+                        <option value="">Selecione a caixa de destino</option>
+                        {% for c in caixas %}
+                            <option value="{{ c.id }}">{{ c.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" id="bulkSubmitBtn" class="btn btn-primary" disabled>
+                        <i class="fas fa-check mr-2"></i>
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="w-10">
+                        <input type="checkbox" id="selectAllDocs" title="Selecionar todos os itens da página">
+                    </th>
+                    <th>Documento</th>
+                    <th>Tipo</th>
+                    <th>Departamento</th>
+                    <th>Caixa Atual</th>
+                    <th>Data</th>
+                    <th>Status OCR</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for documento in documentos %}
+                <tr data-href="{% url 'documentos:detalhe' documento.id %}" tabindex="0">
+                    <td>
+                        <input
+                            type="checkbox"
+                            name="selected_documentos"
+                            value="{{ documento.id }}"
+                            class="doc-row-checkbox"
+                            data-caixa-nome="{{ documento.caixa.nome|default:'SEM CAIXA' }}"
+                            aria-label="Selecionar documento {{ documento.nome }}"
+                        >
+                    </td>
+                    <td>
+                        <div class="font-medium text-gray-900">{{ documento.nome }}</div>
+                        <div class="text-sm text-gray-500">Número: {{ documento.numero_formatado }}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-primary">{{ documento.tipo_documento.nome }}</span>
+                    </td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-building text-gray-400"></i>
+                            {% if documento.departamento %}
+                                {{ documento.departamento.nome }}
+                            {% else %}
+                                <span class="text-gray-500">Sem departamento</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if documento.caixa %}
+                            <span class="badge badge-info">{{ documento.caixa.nome }}</span>
+                        {% else %}
+                            <span class="badge badge-warning">Sem Caixa</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="text-sm text-gray-900">{{ documento.data_documento|date:"d/m/Y" }}</div>
+                        <div class="text-xs text-gray-500">Upload: {{ documento.data_upload|date:"d/m/Y H:i" }}</div>
+                    </td>
+                    <td>
+                        {% if documento.ocr_processado %}
+                            <span class="badge badge-success">Processado</span>
+                        {% else %}
+                            <span class="badge badge-warning">Pendente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <a href="{% url 'documentos:detalhe' documento.id %}" class="btn btn-sm btn-outline" title="Visualizar">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'documentos:editar' documento.id %}" class="btn btn-sm btn-outline" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'documentos:download' documento.id %}" class="btn btn-sm btn-outline" title="Download">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-8 text-gray-500">
+                        Nenhum documento encontrado para os filtros selecionados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    </form>
+</div>
+
+{% if historico_transferencias %}
+<div class="card mt-6 fade-in">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-clock-rotate-left mr-2 text-blue-500"></i>
+            Histórico de Transferências
+        </h2>
+    </div>
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Documento</th>
+                    <th>Movimentação</th>
+                    <th>Usuário</th>
+                    <th>Data/Hora</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in historico_transferencias %}
+                <tr data-href="{% url 'documentos:detalhe' log.documento.id %}" tabindex="0">
+                    <td>{{ log.documento.nome }}</td>
+                    <td>{{ log.descricao }}</td>
+                    <td>{{ log.usuario.username|default:"Sistema" }}</td>
+                    <td>{{ log.data_hora|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if documentos.has_other_pages %}
+<div class="flex items-center justify-between mt-6 fade-in">
+    <div class="text-sm text-gray-700">
+        Mostrando <span class="font-medium">{{ documentos.start_index }}</span> a <span class="font-medium">{{ documentos.end_index }}</span> de <span class="font-medium">{{ documentos.paginator.count }}</span> resultados
+        {% if pagination_state.show_all_limited %}
+            <span class="text-gray-500">(limitado a {{ pagination_state.show_all_limit }})</span>
+        {% endif %}
+    </div>
+    <div class="flex gap-2">
+        {% if pagination_state.show_all %}
+            <a href="?{% querystring page='' per_page='' %}" class="btn btn-outline btn-sm">
+                Voltar à paginação
+            </a>
+        {% else %}
+            <a href="?{% querystring page='' per_page='all' %}" class="btn btn-outline btn-sm">
+                Mostrar todos
+            </a>
+        {% endif %}
+        {% if not pagination_state.show_all %}
+            {% if documentos.has_previous %}
+                <a href="?{% querystring page=documentos.previous_page_number %}" class="btn btn-outline btn-sm">
+                    <i class="fas fa-chevron-left"></i>
+                    Anterior
+                </a>
+            {% else %}
+                <button class="btn btn-outline btn-sm" disabled>
+                    <i class="fas fa-chevron-left"></i>
+                    Anterior
+                </button>
+            {% endif %}
+
+            <button class="btn btn-primary btn-sm">
+                {{ documentos.number }}
+            </button>
+
+            {% if documentos.has_next %}
+                <a href="?{% querystring page=documentos.next_page_number %}" class="btn btn-outline btn-sm">
+                    Próximo
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% else %}
+                <button class="btn btn-outline btn-sm" disabled>
+                    Próximo
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% elif documentos.paginator.count > 0 %}
+<div class="flex items-center justify-between mt-6 fade-in">
+    <div class="text-sm text-gray-700">
+        Mostrando todos os <span class="font-medium">{{ documentos.paginator.count }}</span> resultados
+        {% if pagination_state.show_all_limited %}
+            <span class="text-gray-500">(limitado a {{ pagination_state.show_all_limit }})</span>
+        {% endif %}
+    </div>
+    <div class="flex gap-2">
+        {% if pagination_state.show_all %}
+            <a href="?{% querystring page='' per_page='' %}" class="btn btn-outline btn-sm">
+                Voltar à paginação
+            </a>
+        {% else %}
+            <a href="?{% querystring page='' per_page='all' %}" class="btn btn-outline btn-sm">
+                Mostrar todos
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<style>
+/* Additional styles for this page */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+
+.mt-6 { margin-top: 1.5rem; }
+
+.mb-6 { margin-bottom: 1.5rem; }
+
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+
+.font-medium { font-weight: 500; }
+
+.text-gray-400 { color: #9ca3af; }
+.text-gray-500 { color: #64748b; }
+.text-gray-700 { color: #374151; }
+.text-gray-900 { color: #1e293b; }
+
+.text-red-600 { color: #dc2626; }
+
+.rounded { border-radius: 0.375rem; }
+
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.gap-4 { gap: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mr-2 { margin-right: 0.5rem; }
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 120px auto;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.bulk-actions-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.bulk-actions-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: flex-end;
+}
+
+.bulk-actions-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.bulk-actions-extra {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 420px;
+    max-width: 560px;
+    min-width: 320px;
+}
+
+.bulk-actions-extra .form-control {
+    flex: 1 1 auto;
+    min-width: 240px;
+}
+
+.bulk-actions-extra .btn {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.w-10 {
+    width: 2.5rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: #fff;
+    border: 1px solid #dc2626;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-card {
+    width: min(100%, 520px);
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+    padding: 1.25rem;
+}
+
+.modal-title {
+    display: flex;
+    align-items: center;
+    margin: 0 0 0.75rem;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.modal-text {
+    margin: 0;
+    color: #475569;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.modal-origin-list {
+    margin-top: 1rem;
+    padding: 0.875rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+}
+
+.modal-origin-list ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: #334155;
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.w-10 {
+    width: 2.5rem;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.mr-2 {
+    margin-right: 0.5rem;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+.p-2 {
+    padding: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .bulk-actions-buttons {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .bulk-action-btn {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+    .bulk-actions-bar {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .bulk-actions-controls {
+        gap: 0.75rem;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .bulk-actions-extra {
+        flex-direction: column;
+        align-items: stretch;
+        min-width: 0;
+        max-width: none;
+        width: 100%;
+    }
+
+    .bulk-actions-extra .form-control {
+        min-width: 0;
+    }
+
+    .bulk-actions-extra .btn {
+        margin-left: 0;
+    }
+
+    .form-control {
+        min-width: auto;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.875rem;
+    }
+}
+ </style>
+ {% endblock %}
+
+ {% block extra_js %}
+ <script>
+(function () {
+    function initBulkActions() {
+        const form = document.getElementById('bulkActionsForm');
+        if (!form) {
+            return;
+        }
+
+        const selectAll = document.getElementById('selectAllDocs');
+        const rowCheckboxes = Array.from(document.querySelectorAll('.doc-row-checkbox'));
+        const selectedCount = document.getElementById('selectedCount');
+        const actionButtons = Array.from(document.querySelectorAll('.bulk-action-btn'));
+        const caixaDestino = document.getElementById('bulkCaixaDestino');
+        const submitBtn = document.getElementById('bulkSubmitBtn');
+        const bulkActionsExtra = document.getElementById('bulkActionsExtra');
+        const deleteModal = document.getElementById('bulkDeleteModal');
+        const deleteCount = document.getElementById('bulkDeleteCount');
+        const cancelDeleteBtn = document.getElementById('bulkDeleteCancelBtn');
+        const confirmDeleteBtn = document.getElementById('bulkDeleteConfirmBtn');
+        const transferModal = document.getElementById('bulkTransferModal');
+        const transferCount = document.getElementById('bulkTransferCount');
+        const transferActionLabel = document.getElementById('bulkTransferActionLabel');
+        const transferDestino = document.getElementById('bulkTransferDestino');
+        const transferOrigens = document.getElementById('bulkTransferOrigens');
+        const transferCancelBtn = document.getElementById('bulkTransferCancelBtn');
+        const transferConfirmBtn = document.getElementById('bulkTransferConfirmBtn');
+        let selectedAction = '';
+        let forceSubmit = false;
+        let lastCheckedIndex = null;
+
+	    function getCheckedCount() {
+	        let count = 0;
+	        rowCheckboxes.forEach((checkbox) => {
+	            if (checkbox.checked) {
+	                count += 1;
+            }
+        });
+	        return count;
+	    }
+
+    function markRowSelection(checkbox) {
+        const row = checkbox.closest('tr');
+        if (!row) {
+            return;
+        }
+        row.classList.toggle('selected', checkbox.checked);
+    }
+
+    function clearSelectedAction() {
+        selectedAction = '';
+        actionButtons.forEach((b) => b.classList.remove('active'));
+        bulkActionsExtra.classList.add('hidden');
+        submitBtn.disabled = true;
+    }
+
+	    function ensureSingleActionInput() {
+	        const existing = form.querySelectorAll('input[name="acao_lote"]');
+	        existing.forEach((node) => node.remove());
+	        if (!selectedAction) {
+            return;
+        }
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'acao_lote';
+	        actionInput.value = selectedAction;
+	        form.appendChild(actionInput);
+	    }
+
+	    function submitBulkForm() {
+	        ensureSingleActionInput();
+	        forceSubmit = true;
+	        HTMLFormElement.prototype.submit.call(form);
+	    }
+
+	    function showTransferConfirmation() {
+	        const checkedCount = getCheckedCount();
+	        const isTransferAction = selectedAction === 'mover_caixa';
+
+	        if (checkedCount === 0 || !isTransferAction) {
+	            return false;
+	        }
+
+	        if (!caixaDestino.value) {
+	            caixaDestino.focus();
+	            return false;
+	        }
+
+	        ensureSingleActionInput();
+
+	        const destinoOption = caixaDestino.options[caixaDestino.selectedIndex];
+	        const destinoNome = destinoOption ? destinoOption.text : '-';
+	        const origens = new Set();
+	        rowCheckboxes.forEach((checkbox) => {
+	            if (checkbox.checked) {
+	                origens.add(checkbox.dataset.caixaNome || 'SEM CAIXA');
+	            }
+	        });
+	        transferOrigens.innerHTML = '';
+	        Array.from(origens).sort().forEach((origem) => {
+	            const li = document.createElement('li');
+	            li.textContent = origem;
+	            transferOrigens.appendChild(li);
+	        });
+	        transferCount.textContent = String(checkedCount);
+	        transferDestino.textContent = destinoNome;
+	        transferActionLabel.textContent = 'Mover para outra caixa';
+	        transferModal.classList.remove('hidden');
+	        return true;
+	    }
+
+	    function updateFormState() {
+	        const checkedCount = getCheckedCount();
+	        const exigeCaixa = selectedAction === 'mover_caixa';
+
+	        selectedCount.textContent = String(checkedCount);
+
+	        // Habilitar/desabilitar botões de ação
+	        actionButtons.forEach((btn) => {
+	            btn.disabled = checkedCount === 0;
+	        });
+
+	        if (checkedCount === 0) {
+	            clearSelectedAction();
+	            return;
+        }
+
+        // Mostrar/esconder controles extras
+        bulkActionsExtra.classList.toggle('hidden', !exigeCaixa);
+        caixaDestino.required = exigeCaixa;
+
+        // Habilitar botão de confirmar (somente para ações que exigem caixa)
+        const caixaValida = !exigeCaixa || caixaDestino.value !== '';
+        submitBtn.disabled = !(exigeCaixa && caixaValida);
+    }
+
+    function syncSelectAll() {
+        if (!selectAll || rowCheckboxes.length === 0) {
+            return;
+        }
+        selectAll.checked = rowCheckboxes.every((checkbox) => checkbox.checked);
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            rowCheckboxes.forEach((checkbox) => {
+                checkbox.checked = selectAll.checked;
+                markRowSelection(checkbox);
+            });
+            updateFormState();
+        });
+    }
+
+    rowCheckboxes.forEach((checkbox, index) => {
+        checkbox.addEventListener('click', function (event) {
+            if (event.shiftKey && lastCheckedIndex !== null) {
+                const start = Math.min(lastCheckedIndex, index);
+                const end = Math.max(lastCheckedIndex, index);
+                const checkedValue = checkbox.checked;
+                for (let i = start; i <= end; i += 1) {
+                    rowCheckboxes[i].checked = checkedValue;
+                    markRowSelection(rowCheckboxes[i]);
+                }
+            }
+            lastCheckedIndex = index;
+            syncSelectAll();
+            markRowSelection(checkbox);
+            updateFormState();
+        });
+
+        checkbox.addEventListener('change', function () {
+            syncSelectAll();
+            markRowSelection(checkbox);
+            updateFormState();
+        });
+    });
+
+    // Event listeners para botões de ação
+	    actionButtons.forEach(btn => {
+	        btn.addEventListener('click', function() {
+	            if (this.disabled) {
+	                return;
+	            }
+
+	            const action = this.dataset.action;
+
+            // Remover classe active de todos os botões
+            actionButtons.forEach(b => b.classList.remove('active'));
+
+            if (selectedAction === action) {
+                // Se clicar no mesmo botão, desmarcar
+                selectedAction = '';
+                bulkActionsExtra.classList.add('hidden');
+            } else {
+                // Marcar botão selecionado
+                selectedAction = action;
+                this.classList.add('active');
+            }
+
+            ensureSingleActionInput();
+            updateFormState();
+
+            const checkedCount = getCheckedCount();
+            if (!selectedAction || checkedCount === 0) {
+                return;
+            }
+
+	            // Ações imediatas (não exigem confirmação extra)
+	            if (selectedAction === 'download_lote') {
+	                submitBulkForm();
+	                return;
+	            }
+
+            if (selectedAction === 'excluir') {
+                deleteCount.textContent = String(checkedCount);
+                deleteModal.classList.remove('hidden');
+                return;
+            }
+        });
+    });
+
+    caixaDestino.addEventListener('change', updateFormState);
+
+	    submitBtn.addEventListener('click', function () {
+	        showTransferConfirmation();
+	    });
+
+	    // Submissão do formulário (fallback para Enter/submit nativo)
+	    form.addEventListener('submit', function (event) {
+	        const checkedCount = getCheckedCount();
+		        const isTransferAction = selectedAction === 'mover_caixa';
+
+        if (forceSubmit) {
+            return;
+        }
+
+        if (checkedCount === 0 || !selectedAction) {
+            event.preventDefault();
+            return;
+        }
+
+        ensureSingleActionInput();
+
+        if (!isTransferAction) {
+            // As ações imediatas são disparadas no clique do botão.
+            // Se chegou aqui, bloqueia para evitar submits indevidos.
+            event.preventDefault();
+            return;
+        }
+
+	        showTransferConfirmation();
+	        event.preventDefault();
+	    });
+
+    cancelDeleteBtn.addEventListener('click', function () {
+        deleteModal.classList.add('hidden');
+    });
+
+	    confirmDeleteBtn.addEventListener('click', function () {
+	        submitBulkForm();
+	    });
+
+    deleteModal.addEventListener('click', function (event) {
+        if (event.target === deleteModal) {
+            deleteModal.classList.add('hidden');
+        }
+    });
+
+    transferCancelBtn.addEventListener('click', function () {
+        transferModal.classList.add('hidden');
+    });
+
+	    transferConfirmBtn.addEventListener('click', function () {
+	        submitBulkForm();
+	    });
+
+    transferModal.addEventListener('click', function (event) {
+        if (event.target === transferModal) {
+            transferModal.classList.add('hidden');
+        }
+    });
+
+        // Inicialização
+        rowCheckboxes.forEach((checkbox) => markRowSelection(checkbox));
+        ensureSingleActionInput();
+        updateFormState();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBulkActions);
+    } else {
+        initBulkActions();
+    }
+})();
+</script>
+
+ {% endblock %}

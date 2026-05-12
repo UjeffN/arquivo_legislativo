@@ -1,219 +1,315 @@
-{% extends 'base.html' %}
+{% extends 'layouts/painel.html' %}
 {% load static %}
 
 {% block title %}{{ titulo }} - Sistema de Arquivo Digital{% endblock %}
 
 {% block content %}
+<div class="page-header fade-in no-print">
+    <h1 class="page-title">Etiqueta da Caixa {{ caixa.numero|stringformat:"04d" }}</h1>
+    <p class="page-description">Modelo institucional para impressão e fixação na caixa.</p>
+</div>
+
+<div class="flex gap-2 mb-6 no-print">
+    <button onclick="window.print()" class="btn btn-primary">
+        <i class="fas fa-print"></i>
+        Imprimir Etiqueta
+    </button>
+    <a href="{% url 'caixas:detalhe_caixa' caixa.pk %}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i>
+        Voltar
+    </a>
+</div>
+
+<div class="card no-print">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-info-circle mr-2 text-gray-500"></i>
+            Instruções Rápidas
+        </h2>
+    </div>
+    <div class="card-body">
+        <p class="text-sm text-gray-700">Use etiqueta adesiva de 10cm x 14cm, escala de 100% e margens zeradas para aproveitar toda a área da etiqueta.</p>
+    </div>
+</div>
+
+<div class="etiqueta-wrap">
+    <div class="etiqueta-sheet">
+        <div class="etiqueta-main">
+            <div class="etiqueta-header">
+                <div class="brasao-mark">
+                    <img src="{% static 'images/logo.png' %}" alt="Logo da Câmara Municipal de Parauapebas" class="brasao-logo">
+                </div>
+                <div class="orgao-title">
+                    <div>ESTADO DO PARÁ</div>
+                    <div>PODER LEGISLATIVO</div>
+                    <div>CÂMARA MUNICIPAL DE PARAUAPEBAS</div>
+                </div>
+            </div>
+
+            <div class="etiqueta-box-title">CAIXA N° {{ caixa.numero|stringformat:"02d" }}</div>
+
+            <div class="linha-info">
+                <span class="label">Título da caixa:</span>
+                <span class="valor">{{ caixa.nome|default:"CAIXA DE ARQUIVO" }}</span>
+            </div>
+            <div class="linha-info">
+                <span class="label">Cadastro:</span>
+                <span class="valor">{{ caixa.criado_em|date:"d/m/Y H:i:s" }}</span>
+            </div>
+            <div class="linha-info">
+                <span class="label">Armário:</span>
+                <span class="valor">{{ caixa.localizacao_fisica|default:"ARQUIVO CÂMARA MUNICIPAL DE PARAUAPEBAS" }}</span>
+            </div>
+            <div class="linha-info">
+                <span class="label">Capacidade:</span>
+                <span class="valor">{{ caixa.capacidade_maxima }} documentos</span>
+            </div>
+
+            <div class="bloco-obs">
+                <div class="label">Observação:</div>
+                <div class="obs-content">{{ caixa.descricao|default:"Sem observações cadastradas." }}</div>
+            </div>
+
+            <div class="etiqueta-footer">
+                <span>Emitido em {{ caixa.criado_em|date:"d/m/Y" }}</span>
+            </div>
+        </div>
+
+        <div class="barcode-col">
+            <div class="barcode-visual" aria-hidden="true"></div>
+            <div class="barcode-number">{{ caixa.numero|stringformat:"04d" }}</div>
+        </div>
+    </div>
+</div>
+
 <style>
-@media print {
-    body * {
-        visibility: hidden;
-    }
-    .etiqueta-container, .etiqueta-container * {
-        visibility: visible;
-    }
-    .etiqueta-container {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-    }
-    .no-print {
-        display: none !important;
-    }
+.flex { display: flex; }
+.gap-2 { gap: 0.5rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mr-2 { margin-right: 0.5rem; }
+.text-sm { font-size: 0.875rem; }
+.text-gray-700 { color: #374151; }
+.text-gray-500 { color: #64748b; }
+
+.etiqueta-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
 }
 
-.etiqueta-container {
-    width: 10cm;
-    height: 6cm;
-    border: 2px solid #000;
-    padding: 10px;
-    margin: 20px auto;
+.etiqueta-sheet {
+    width: 100mm;
+    height: 140mm;
+    border: 1px solid #111;
+    background: #fff;
+    color: #000;
     page-break-inside: avoid;
-    font-family: Arial, sans-serif;
+    font-family: "Times New Roman", serif;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 20mm;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .etiqueta-header {
-    text-align: center;
-    border-bottom: 2px solid #000;
-    padding-bottom: 5px;
-    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 24mm minmax(0, 1fr);
+    align-items: center;
+    border-bottom: 1px solid #444;
+    min-height: 0;
 }
 
-.etiqueta-title {
-    font-size: 18px;
-    font-weight: bold;
-    margin: 0;
-}
-
-.etiqueta-content {
+.brasao-mark {
+    border-right: 1px solid #444;
     display: flex;
-    height: calc(100% - 80px);
-}
-
-.etiqueta-info {
-    flex: 1;
-    padding-right: 10px;
-}
-
-.etiqueta-info h3 {
-    font-size: 16px;
-    margin: 5px 0;
-    font-weight: bold;
-}
-
-.etiqueta-info p {
-    font-size: 12px;
-    margin: 3px 0;
-    margin: 0;
-}
-
-.etiqueta-qrcode {
-    width: 80px;
-    display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
+    height: 100%;
+    padding: 1.6mm;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
-.codigo-barras {
+.brasao-logo {
+    display: block;
     width: 100%;
-    height: 40px;
-    border: 1px solid #000;
+    height: 100%;
+    max-width: 20mm;
+    max-height: 22mm;
+    object-fit: contain;
+}
+
+.orgao-title {
+    text-align: center;
+    font-size: 10.2px;
+    letter-spacing: 0.2px;
+    line-height: 1.22;
+    padding: 2mm 2.4mm;
+    font-weight: 700;
+    overflow: hidden;
+}
+
+.etiqueta-main {
+    display: grid;
+    grid-template-rows: 25mm 17mm 14mm 13mm 14mm 13mm minmax(0, 1fr) 10mm;
+    border-right: 1px solid #444;
+    min-width: 0;
+    min-height: 0;
+}
+
+.etiqueta-box-title {
+    text-align: center;
+    font-size: 27px;
+    font-weight: 700;
+    border-bottom: 1px solid #444;
+    padding: 4mm 2mm;
+    line-height: 1.1;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    font-weight: bold;
-    margin-top: 5px;
+    overflow: hidden;
+}
+
+.linha-info {
+    border-bottom: 1px solid #999;
+    padding: 2mm 2.6mm;
+    font-size: 12.5px;
+    line-height: 1.18;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.label {
+    font-weight: 400;
+}
+
+.valor {
+    font-weight: 700;
+    margin-left: 6px;
+    overflow-wrap: anywhere;
+    min-width: 0;
+}
+
+.bloco-obs {
+    padding: 2.4mm 2.6mm;
+    font-size: 13px;
+    line-height: 1.2;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.obs-content {
+    margin-top: 1.4mm;
+    font-weight: 700;
+    overflow-wrap: anywhere;
 }
 
 .etiqueta-footer {
+    border-top: 1px solid #444;
+    padding: 1.8mm 2.4mm;
     text-align: center;
-    border-top: 1px solid #000;
-    padding-top: 5px;
-    margin-top: 10px;
-    font-size: 10px;
+    font-size: 11.5px;
+    line-height: 1.15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.barcode-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2mm 1.6mm;
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 0;
+}
+
+.barcode-visual {
+    flex: 1;
+    border: 1px solid #444;
+    background:
+        repeating-linear-gradient(
+            to right,
+            #000 0,
+            #000 2px,
+            #fff 2px,
+            #fff 5px,
+            #000 5px,
+            #000 6px,
+            #fff 6px,
+            #fff 9px
+        );
+}
+
+.barcode-number {
+    text-align: center;
+    margin-top: 2mm;
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+@media print {
+    @page {
+        size: 100mm 140mm;
+        margin: 0;
+    }
+
+    html,
+    body {
+        width: 100mm !important;
+        height: 140mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        overflow: hidden !important;
+    }
+
+    .admin-layout {
+        display: block !important;
+        min-height: 140mm !important;
+    }
+
+    .sidebar,
+    .topbar,
+    .overlay,
+    .no-print {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        min-height: 140mm !important;
+        display: block !important;
+    }
+
+    .page-content {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100mm !important;
+        height: 140mm !important;
+        overflow: hidden !important;
+    }
+
+    .etiqueta-wrap {
+        display: block;
+        width: 100mm;
+        height: 140mm;
+        margin: 0;
+        padding: 0;
+    }
+
+    .etiqueta-sheet {
+        width: 100mm;
+        height: 140mm;
+        margin: 0;
+        border: 1px solid #111;
+        box-shadow: none;
+    }
 }
 </style>
-
-<div class="no-print">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h4 class="mb-0">
-                            <i class="fas fa-print"></i>
-                            {{ titulo }}
-                        </h4>
-                        <p class="text-muted mb-0">Etiqueta para impressão da caixa {{ caixa.numero }}</p>
-                    </div>
-                    <div class="btn-group">
-                        <button onclick="window.print()" class="btn btn-primary">
-                            <i class="fas fa-print"></i>
-                            Imprimir Etiqueta
-                        </button>
-                        <a href="{% url 'caixas:detalhe_caixa' caixa.pk %}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i>
-                            Voltar
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Etiqueta para impressão -->
-<div class="etiqueta-container">
-    <div class="etiqueta-header">
-        <div class="etiqueta-title">CAIXA DE ARQUIVO</div>
-    </div>
-    
-    <div class="etiqueta-content">
-        <div class="etiqueta-info">
-            <h3>CAIXA {{ caixa.numero }}</h3>
-            <p><strong>Nome:</strong> {{ caixa.nome }}</p>
-            {% if caixa.localizacao_fisica %}
-                <p><strong>Localização:</strong> {{ caixa.localizacao_fisica }}</p>
-            {% endif %}
-            {% if caixa.descricao %}
-                <p><strong>Descrição:</strong> {{ caixa.descricao }}</p>
-            {% endif %}
-        </div>
-        
-            </div>
-    
-    <div class="etiqueta-footer">
-        {{ caixa.criado_em|date:"d/m/Y" }}
-    </div>
-</div>
-
-<div class="no-print mt-4">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">
-                        <i class="fas fa-info-circle"></i>
-                        Informações da Etiqueta
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <table class="table table-sm">
-                        <tr>
-                            <th>Número:</th>
-                            <td>{{ caixa.numero }}</td>
-                        </tr>
-                        <tr>
-                            <th>Localização:</th>
-                            <td>{{ caixa.localizacao_fisica|default:"Não definida" }}</td>
-                        </tr>
-                        <tr>
-                            <th>Descrição:</th>
-                            <td>{{ caixa.descricao|default:"Sem descrição" }}</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">
-                        <i class="fas fa-lightbulb"></i>
-                        Instruções de Impressão
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success"></i>
-                            Use papel adesivo ou etiqueta autoadesiva
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success"></i>
-                            Configure a impressora para o tamanho 10x6cm
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success"></i>
-                            Verifique a qualidade da impressão
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success"></i>
-                            Cole em local visível na caixa
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success"></i>
-                            Mantenha o código de barras acessível
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}

@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Arquivo Digital - Câmara Municipal de Parauapebas{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='12' y='6' width='40' height='52' rx='6' fill='%231d4ed8'/%3E%3Crect x='20' y='18' width='24' height='4' rx='2' fill='white'/%3E%3Crect x='20' y='27' width='24' height='4' rx='2' fill='white'/%3E%3Crect x='20' y='36' width='14' height='4' rx='2' fill='white'/%3E%3Crect x='36' y='36' width='8' height='12' rx='2' fill='%2393c5fd'/%3E%3C/svg%3E">
+    <script>
+        (function() {
+            var sidebarCollapsedKey = 'sidebarCollapsed';
+            var sidebarCollapsed = false;
+
+            try {
+                sidebarCollapsed = localStorage.getItem(sidebarCollapsedKey) === 'true';
+            } catch (error) {
+                sidebarCollapsed = false;
+            }
+
+            document.documentElement.classList.add('admin-sidebar-preload');
+            document.documentElement.setAttribute('data-admin-sidebar-collapsed', String(sidebarCollapsed));
+        })();
+    </script>
+    <style id="admin-sidebar-critical-css">
+        .sidebar-toggle {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            overflow: hidden;
+        }
+
+        .sidebar-toggle-icon {
+            position: absolute;
+            width: 1rem;
+            height: 1rem;
+            opacity: 0;
+        }
+
+        html[data-admin-sidebar-collapsed="false"] .sidebar-toggle-icon-collapse {
+            opacity: 1;
+        }
+
+        html[data-admin-sidebar-collapsed="true"] .sidebar-toggle-icon-expand {
+            opacity: 1;
+        }
+    </style>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Admin CSS -->
+    {% load static %}
+    <link href="{% static 'css/tailwind-admin.css' %}?v=20240427" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-branding">
+                    <a href="{% url 'core:home' %}" class="sidebar-logo" id="sidebarLogo" aria-label="Ir para o dashboard" title="Ir para o dashboard">
+                        <span class="sidebar-logo-icon-wrap">
+                            <i class="fas fa-file-invoice sidebar-logo-icon sidebar-logo-icon-original text-blue-600" aria-hidden="true"></i>
+                            <i class="fa-solid fa-chevron-right sidebar-logo-icon sidebar-logo-icon-expand" aria-hidden="true"></i>
+                        </span>
+                        <span>Arquivo Digital</span>
+                    </a>
+                    <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Recolher menu" aria-expanded="true" title="Expandir/recolher menu">
+                        <i class="fa-solid fa-chevron-left sidebar-toggle-icon sidebar-toggle-icon-collapse" aria-hidden="true"></i>
+                        <i class="fa-solid fa-chevron-right sidebar-toggle-icon sidebar-toggle-icon-expand" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Principal</div>
+                    <a href="{% url 'core:home' %}" class="sidebar-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        <i class="fas fa-home"></i>
+                        <span class="sidebar-item-label">Dashboard</span>
+                    </a>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Documentos</div>
+                    <a href="{% url 'documentos:listar' %}" class="sidebar-item {% if 'documentos' in request.resolver_match.namespaces %}active{% endif %}">
+                        <i class="fas fa-file-alt"></i>
+                        <span class="sidebar-item-label">Documentos</span>
+                    </a>
+                    <a href="{% url 'documentos:upload' %}" class="sidebar-item">
+                        <i class="fas fa-upload"></i>
+                        <span class="sidebar-item-label">Upload</span>
+                    </a>
+                    <a href="{% url 'documentos:pesquisar' %}" class="sidebar-item">
+                        <i class="fas fa-search"></i>
+                        <span class="sidebar-item-label">Pesquisar</span>
+                    </a>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Organização</div>
+                    <a href="{% url 'caixas:listar_caixas' %}" class="sidebar-item {% if 'caixas' in request.resolver_match.namespaces %}active{% endif %}">
+                        <i class="fas fa-archive"></i>
+                        <span class="sidebar-item-label">Caixas</span>
+                    </a>
+                    <a href="{% url 'departamentos:listar' %}" class="sidebar-item {% if 'departamentos' in request.resolver_match.namespaces %}active{% endif %}">
+                        <i class="fas fa-building"></i>
+                        <span class="sidebar-item-label">Departamentos</span>
+                    </a>
+                    <a href="{% url 'documentos:categorias_listar' %}" class="sidebar-item {% if request.resolver_match.url_name|default:''|slice:':10' == 'categorias_' %}active{% endif %}">
+                        <i class="fas fa-tags"></i>
+                        <span class="sidebar-item-label">Categorias</span>
+                    </a>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Sistema</div>
+                    <a href="{% url 'admin:index' %}" class="sidebar-item">
+                        <i class="fas fa-cog"></i>
+                        <span class="sidebar-item-label">Administração</span>
+                    </a>
+                    <form method="post" action="{% url 'custom_logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="sidebar-item w-full text-left">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="sidebar-item-label">Sair</span>
+                        </button>
+                    </form>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+
+                    <!-- Espaçador -->
+                    <div class="topbar-spacer"></div>
+                </div>
+
+                <div class="topbar-right">
+                    <button class="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge"></span>
+                    </button>
+
+                    <div class="relative">
+                        <button class="user-menu" id="userMenu">
+                            <div class="user-avatar">
+                                {% if user.is_authenticated %}
+                                    {{ user.username|first|upper }}
+                                {% else %}
+                                    U
+                                {% endif %}
+                            </div>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden" id="userDropdown">
+                            <div class="p-3 border-b border-gray-200">
+                                <p class="text-sm font-medium text-gray-900">
+                                    {% if user.is_authenticated %}
+                                        {{ user.username }}
+                                    {% else %}
+                                        Usuário
+                                    {% endif %}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    {% if user.is_superuser %}
+                                        Administrador
+                                    {% elif user.is_staff %}
+                                        Equipe
+                                    {% else %}
+                                        Usuário
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="py-2">
+                                <a href="{% url 'admin:index' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-cog mr-2"></i> Administração
+                                </a>
+                                <form method="post" action="{% url 'custom_logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-sign-out-alt mr-2"></i> Sair
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="page-content">
+                <!-- Messages -->
+                {% if messages %}
+                    <div class="mb-6">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} fade-in">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+
+        <!-- Mobile Overlay -->
+        <div class="overlay" id="overlay"></div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>window.ARQUIVO_DIGITAL_PREFIX = "{{ request.META.SCRIPT_NAME|default:'' }}";</script>
+
+    <style>
+        @media (min-width: 1025px) {
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar {
+                width: 5rem;
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .main-content {
+                margin-left: 5rem;
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-header {
+                width: 100%;
+                height: 64px;
+                max-height: 64px;
+                padding: 0 0.5rem;
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-branding {
+                align-items: center;
+                justify-content: center;
+                gap: 0.45rem;
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-logo {
+                flex: 0 0 auto;
+                justify-content: center;
+                width: auto;
+                padding: 0.5rem;
+                border-radius: 0.75rem;
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-logo span,
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-item-label,
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-section-title {
+                opacity: 0;
+                width: 0;
+                overflow: hidden;
+                margin: 0;
+                pointer-events: none;
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-logo .sidebar-logo-icon-wrap {
+                opacity: 1;
+                width: 1.25rem;
+                margin: 0;
+                pointer-events: auto;
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-logo:hover,
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-logo:focus-visible {
+                background: #eff6ff;
+                color: #2563eb;
+                cursor: pointer;
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-logo:hover .sidebar-logo-icon-original,
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-logo:focus-visible .sidebar-logo-icon-original {
+                opacity: 0;
+                transform: scale(0.78);
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-logo:hover .sidebar-logo-icon-expand,
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-logo:focus-visible .sidebar-logo-icon-expand {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-item {
+                display: flex;
+                justify-content: center;
+                min-height: 40px;
+                padding: 0.55rem 0;
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-item i {
+                margin-right: 0;
+                font-size: 1rem;
+            }
+
+            html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-toggle {
+                opacity: 0;
+                pointer-events: none;
+                width: 0;
+                height: 0;
+                border-width: 0;
+                overflow: hidden;
+            }
+        }
+
+        html.admin-sidebar-preload .sidebar,
+        html.admin-sidebar-preload .main-content,
+        html.admin-sidebar-preload .sidebar-header,
+        html.admin-sidebar-preload .sidebar-branding,
+        html.admin-sidebar-preload .sidebar-logo,
+        html.admin-sidebar-preload .sidebar-logo span,
+        html.admin-sidebar-preload .sidebar-logo-icon-wrap,
+        html.admin-sidebar-preload .sidebar-logo-icon,
+        html.admin-sidebar-preload .sidebar-section-title,
+        html.admin-sidebar-preload .sidebar-item-label,
+        html.admin-sidebar-preload .sidebar-item,
+        html.admin-sidebar-preload .sidebar-item i,
+        html.admin-sidebar-preload .sidebar-toggle,
+        html.admin-sidebar-preload .sidebar-toggle-icon {
+            transition: none !important;
+        }
+
+        .sidebar-branding {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .sidebar {
+            overflow-x: hidden;
+        }
+
+        .sidebar-logo {
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+            flex: 1;
+            min-width: 0;
+            border-radius: 0.75rem;
+            transition: color 0.2s ease, background-color 0.2s ease, padding 0.24s ease, width 0.24s ease, opacity 0.2s ease;
+        }
+
+        .sidebar-logo-icon-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.25rem;
+            height: 1.25rem;
+            flex: 0 0 1.25rem;
+        }
+
+        .sidebar-logo-icon {
+            position: absolute;
+            transition: opacity 0.18s ease, transform 0.22s ease, color 0.2s ease;
+        }
+
+        .sidebar-logo-icon-original {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .sidebar-logo-icon-expand {
+            opacity: 0;
+            transform: scale(0.78);
+        }
+
+        .sidebar-toggle {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 9999px;
+            background: #ffffff;
+            color: #64748b;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+            transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .sidebar-toggle:hover {
+            color: #2563eb;
+            border-color: #93c5fd;
+            background: #eff6ff;
+            transform: translateY(-1px);
+        }
+
+        .sidebar-toggle:focus-visible {
+            outline: 2px solid #93c5fd;
+            outline-offset: 2px;
+        }
+
+        .sidebar-toggle-icon {
+            position: absolute;
+            width: 1rem;
+            height: 1rem;
+            opacity: 0;
+            transform: scale(0.78);
+            transition: opacity 0.18s ease, transform 0.22s ease;
+        }
+
+        html[data-admin-sidebar-collapsed="true"] .admin-layout .sidebar-toggle {
+            color: #2563eb;
+            border-color: #bfdbfe;
+            background: #dbeafe;
+        }
+
+        html[data-admin-sidebar-collapsed="false"] .sidebar-toggle-icon-collapse {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        html[data-admin-sidebar-collapsed="true"] .sidebar-toggle-icon-expand {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .sidebar-item-label {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .sidebar,
+        .main-content,
+        .sidebar-header,
+        .sidebar-branding,
+        .sidebar-logo,
+        .sidebar-logo span,
+        .sidebar-logo-icon-wrap,
+        .sidebar-section-title,
+        .sidebar-item-label,
+        .sidebar-item,
+        .sidebar-item i {
+            transition: width 0.24s ease, margin-left 0.24s ease, transform 0.24s ease, opacity 0.2s ease, color 0.2s ease, padding 0.24s ease;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar-toggle {
+                display: none;
+            }
+        }
+    </style>
+
+    <!-- Custom JavaScript -->
+    <script>
+        const adminLayout = document.querySelector('.admin-layout');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const sidebarLogo = document.getElementById('sidebarLogo');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarCollapsedKey = 'sidebarCollapsed';
+        const desktopMediaQuery = window.matchMedia('(min-width: 1025px)');
+
+        function isDesktopViewport() {
+            return desktopMediaQuery.matches;
+        }
+
+        function readStoredSidebarCollapsed() {
+            try {
+                return localStorage.getItem(sidebarCollapsedKey) === 'true';
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function neutralizeSidebarToggleAttributes() {
+            if (!sidebar) {
+                return;
+            }
+
+            sidebar.querySelectorAll('[data-toggle="sidebar"], [data-bs-toggle="sidebar"]').forEach(function(item) {
+                item.removeAttribute('data-toggle');
+                item.removeAttribute('data-bs-toggle');
+            });
+        }
+
+        function persistSidebarState(collapsed) {
+            try {
+                localStorage.setItem(sidebarCollapsedKey, String(collapsed));
+            } catch (error) {
+                // Mantem a sidebar funcional mesmo quando o navegador bloqueia storage.
+            }
+        }
+
+        function setSidebarState(collapsed, shouldPersist) {
+            if (!adminLayout) {
+                return;
+            }
+
+            const normalizedCollapsed = Boolean(collapsed);
+            adminLayout.classList.toggle('sidebar-collapsed', normalizedCollapsed);
+            document.documentElement.setAttribute('data-admin-sidebar-collapsed', String(normalizedCollapsed));
+
+            if (sidebarToggle) {
+                sidebarToggle.setAttribute('aria-expanded', String(!normalizedCollapsed));
+                sidebarToggle.setAttribute('aria-label', normalizedCollapsed ? 'Expandir menu' : 'Recolher menu');
+            }
+
+            if (sidebarLogo) {
+                sidebarLogo.setAttribute('aria-label', normalizedCollapsed ? 'Expandir menu' : 'Ir para o dashboard');
+                sidebarLogo.setAttribute('title', normalizedCollapsed ? 'Expandir menu' : 'Ir para o dashboard');
+            }
+
+            if (shouldPersist && isDesktopViewport()) {
+                persistSidebarState(normalizedCollapsed);
+            }
+        }
+
+        function applySavedSidebarState() {
+            if (!adminLayout) {
+                return;
+            }
+
+            if (!isDesktopViewport()) {
+                adminLayout.classList.remove('sidebar-collapsed');
+                document.documentElement.setAttribute('data-admin-sidebar-collapsed', 'false');
+                return;
+            }
+
+            setSidebarState(readStoredSidebarCollapsed(), false);
+        }
+
+        applySavedSidebarState();
+        neutralizeSidebarToggleAttributes();
+
+        requestAnimationFrame(function() {
+            document.documentElement.classList.remove('admin-sidebar-preload');
+        });
+
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                if (!isDesktopViewport()) {
+                    return;
+                }
+
+                setSidebarState(!adminLayout.classList.contains('sidebar-collapsed'), true);
+            });
+        }
+
+        if (sidebarLogo) {
+            sidebarLogo.addEventListener('click', function(event) {
+                if (!isDesktopViewport() || !adminLayout.classList.contains('sidebar-collapsed')) {
+                    return;
+                }
+
+                event.preventDefault();
+                setSidebarState(false, true);
+            });
+        }
+
+        if (desktopMediaQuery.addEventListener) {
+            desktopMediaQuery.addEventListener('change', applySavedSidebarState);
+        } else if (desktopMediaQuery.addListener) {
+            desktopMediaQuery.addListener(applySavedSidebarState);
+        }
+
+        // Mobile Menu Toggle
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        if (mobileMenuToggle) {
+            mobileMenuToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+            });
+        }
+
+        // Close mobile menu when clicking overlay
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            });
+        }
+
+        // User Dropdown
+        document.getElementById('userMenu').addEventListener('click', function(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('userMenu');
+            const dropdown = document.getElementById('userDropdown');
+
+            if (!userMenu.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Linhas e cards clicáveis em listagens
+        const interactiveSelector = [
+            'a',
+            'button',
+            'input',
+            'select',
+            'textarea',
+            'label',
+            '[role="button"]',
+            '[data-row-action]'
+        ].join(',');
+
+        document.querySelectorAll('[data-href]').forEach(function(item) {
+            if (!item.hasAttribute('tabindex')) {
+                item.setAttribute('tabindex', '0');
+            }
+
+            item.querySelectorAll(interactiveSelector).forEach(function(control) {
+                control.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                });
+            });
+        });
+
+        document.addEventListener('click', function(event) {
+            const target = event.target instanceof Element ? event.target : event.target.parentElement;
+            if (!target) {
+                return;
+            }
+
+            if (target.closest(interactiveSelector)) {
+                return;
+            }
+
+            const clickableItem = target.closest('[data-href]');
+            if (!clickableItem) {
+                return;
+            }
+
+            const href = clickableItem.getAttribute('data-href');
+            if (href) {
+                window.location.href = href;
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+
+            const target = event.target instanceof Element ? event.target : event.target.parentElement;
+            if (!target) {
+                return;
+            }
+
+            const clickableItem = target.closest('[data-href]');
+            if (!clickableItem || target.closest(interactiveSelector)) {
+                return;
+            }
+
+            const href = clickableItem.getAttribute('data-href');
+            if (href) {
+                event.preventDefault();
+                window.location.href = href;
+            }
+        });
+
+        // Search functionality
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const searchTerm = e.target.value;
+                    if (searchTerm.trim()) {
+                        window.location.href = `/documentos/pesquisar/?q=${encodeURIComponent(searchTerm)}`;
+                    }
+                }
+            });
+        }
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                alert.style.opacity = '0';
+                setTimeout(function() {
+                    alert.remove();
+                }, 300);
+            });
+        }, 5000);
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

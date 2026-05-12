@@ -1,0 +1,81 @@
+{% extends 'layouts/painel.html' %}
+{% load querystring_tags %}
+
+{% block title %}Histórico de Movimentações - Caixas{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1 class="page-title">Histórico de Movimentações de Documentos</h1>
+    <p class="page-description">Rastreamento de transferências e desvinculações entre caixas.</p>
+</div>
+
+<div class="card fade-in">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-clock-rotate-left mr-2 text-blue-600"></i>
+            Eventos Registrados
+        </h2>
+    </div>
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Documento</th>
+                    <th>Ação</th>
+                    <th>Usuário</th>
+                    <th>Detalhes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr data-href="{% url 'documentos:detalhe' log.documento.id %}" tabindex="0">
+                    <td>{{ log.data_hora|date:"d/m/Y H:i:s" }}</td>
+                    <td>
+                        <a href="{% url 'documentos:detalhe' log.documento.id %}">
+                            {{ log.documento.nome }}
+                        </a>
+                    </td>
+                    <td>{{ log.get_acao_display }}</td>
+                    <td>{{ log.usuario.username|default:"Sistema" }}</td>
+                    <td>{{ log.descricao }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-8 text-gray-500">
+                        Nenhum evento de movimentação encontrado.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages or page_obj.paginator.count > 0 %}
+<div class="flex items-center justify-between mt-6">
+    <div class="text-sm text-gray-700">
+        Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ page_obj.paginator.count }} registros
+        {% if pagination_state.show_all_limited %}
+            <span class="text-gray-500">(limitado a {{ pagination_state.show_all_limit }})</span>
+        {% endif %}
+    </div>
+    <div class="flex gap-2">
+        {% if pagination_state.show_all %}
+            <a href="?{% querystring page='' per_page='' %}" class="btn btn-outline btn-sm">Voltar à paginação</a>
+        {% else %}
+            <a href="?{% querystring page='' per_page='all' %}" class="btn btn-outline btn-sm">Mostrar todos</a>
+            {% if page_obj.has_previous %}
+                <a href="?{% querystring page=page_obj.previous_page_number %}" class="btn btn-outline btn-sm">Anterior</a>
+            {% endif %}
+            {% if page_obj.paginator.num_pages > 1 %}
+                <span class="btn btn-primary btn-sm">Página {{ page_obj.number }}</span>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a href="?{% querystring page=page_obj.next_page_number %}" class="btn btn-outline btn-sm">Próxima</a>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

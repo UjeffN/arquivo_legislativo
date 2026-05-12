@@ -1,0 +1,98 @@
+{% extends 'layouts/painel.html' %}
+
+{% block title %}Inativar Categoria de Documento - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1 class="page-title">Inativar Categoria de Documento</h1>
+    <p class="page-description">Confirme a exclusao logica da categoria selecionada.</p>
+</div>
+
+<div class="delete-layout">
+    <div class="card fade-in">
+        <div class="card-header">
+            <h2 class="card-title text-red-600">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Atencao
+            </h2>
+        </div>
+        <div class="card-body">
+            <p class="mb-4">
+                Voce esta prestes a inativar a categoria
+                <strong>{{ categoria.nome }}</strong>.
+            </p>
+
+            <div class="impact-box">
+                <i class="fas fa-shield-alt"></i>
+                <div>
+                    <strong>{{ documentos_afetados }} documento(s) vinculado(s)</strong>
+                    <p>Os documentos permanecerao catalogados com essa categoria. A categoria apenas deixara de aparecer em novos cadastros.</p>
+                </div>
+            </div>
+
+            <form method="post" class="delete-actions">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash mr-2"></i>
+                    Confirmar Inativacao
+                </button>
+                <a href="{% url 'documentos:categorias_listar' %}" class="btn btn-outline">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Cancelar
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.delete-layout {
+    max-width: 760px;
+}
+
+.mb-4 { margin-bottom: 1rem; }
+.mr-2 { margin-right: 0.5rem; }
+.text-red-600 { color: #dc2626; }
+
+.btn-danger {
+    background: #dc2626;
+    color: #fff;
+    border-color: #dc2626;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    color: #fff;
+}
+
+.impact-box {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    border: 1px solid #fed7aa;
+    border-radius: 0.75rem;
+    background: #fff7ed;
+    color: #9a3412;
+}
+
+.impact-box i {
+    margin-top: 0.2rem;
+    font-size: 1.25rem;
+}
+
+.impact-box p {
+    margin-top: 0.25rem;
+    color: #7c2d12;
+}
+
+.delete-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+</style>
+{% endblock %}

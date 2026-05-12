@@ -1,0 +1,231 @@
+{% extends "layouts/painel.html" %}
+
+{% block title %}Download em Lote - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1 class="page-title">Download em Lote</h1>
+    <p class="page-description">Prepare um arquivo ZIP com os documentos selecionados.</p>
+</div>
+<div class="card fade-in">
+    <div class="card-header">
+        <h2 class="card-title">Download em Lote de Documentos</h2>
+    </div>
+    <div class="card-body">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="form-row">
+            <div class="field-box">
+                <label>Documentos Selecionados:</label>
+                <div class="readonly">
+                    <span id="documentos-selecionados-count">0</span> documentos selecionados
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="field-box field-box--full">
+                <label for="nome_arquivo">Nome do Arquivo ZIP:</label>
+                <input type="text" id="nome_arquivo" name="nome_arquivo"
+                       class="vTextField" maxlength="100"
+                       placeholder="Ex: memorandos_2024" />
+                <div class="help">
+                    Digite um nome para o arquivo ZIP (sem extensão).
+                    Será adicionado automaticamente data e hora.
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="field-box field-box--full">
+                <h3>Resumo do Download</h3>
+                <div id="resumo-download">
+                    <p>Carregando informações...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="submit-row form-actions">
+            <button type="submit" class="btn btn-primary" id="btn-download">Criar e Baixar ZIP</button>
+            <a href="{% url 'documentos:listar' %}" class="btn btn-outline">Cancelar</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.alert {
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+.alert.success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+.alert.error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+.alert.warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+.field-box--full {
+    width: 100%;
+}
+
+#resumo-download {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+#resumo-download h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+#resumo-download ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+#resumo-download li {
+    margin-bottom: 5px;
+}
+
+.btn-download:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Obter IDs dos documentos da sessão ou URL
+    const urlParams = new URLSearchParams(window.location.search);
+    let documentoIds = [];
+
+    // Tentar obter da URL
+    const idsFromUrl = urlParams.get('ids');
+    if (idsFromUrl) {
+        documentoIds = idsFromUrl.split(',').map(id => parseInt(id.trim()));
+    }
+
+
+    if (documentoIds.length === 0) {
+        document.getElementById('resumo-download').innerHTML =
+            '<p style="color: red;">Nenhum documento selecionado.</p>';
+        document.getElementById('btn-download').disabled = true;
+        return;
+    }
+
+    // Atualizar contador
+    document.getElementById('documentos-selecionados-count').textContent = documentoIds.length;
+
+    // Buscar resumo via AJAX
+    fetch(`{% url "documentos:download_lote_preview" %}?${documentoIds.map(id => `ids[]=${id}`).join('&')}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('resumo-download').innerHTML =
+                    `<p style="color: red;">${data.error}</p>`;
+                document.getElementById('btn-download').disabled = true;
+                return;
+            }
+
+            // Exibir resumo
+            let resumoHtml = `
+                <h4>📊 Estatísticas do Download</h4>
+                <ul>
+                    <li><strong>Total de documentos:</strong> ${data.total_documentos}</li>
+                    <li><strong>Arquivos para download:</strong> ${data.total_arquivos}</li>
+                    <li><strong>Tamanho estimado:</strong> ${data.tamanho_total_mb} MB</li>
+                </ul>
+            `;
+
+            if (data.tipos && Object.keys(data.tipos).length > 0) {
+                resumoHtml += `
+                    <h4>📋 Por Categoria de Documento</h4>
+                    <ul>
+                `;
+                for (const [tipo, count] of Object.entries(data.tipos)) {
+                    resumoHtml += `<li>${tipo}: ${count}</li>`;
+                }
+                resumoHtml += `</ul>`;
+            }
+
+            if (data.departamentos && Object.keys(data.departamentos).length > 0) {
+                resumoHtml += `
+                    <h4>🏢 Por Departamento</h4>
+                    <ul>
+                `;
+                for (const [depto, count] of Object.entries(data.departamentos)) {
+                    resumoHtml += `<li>${depto}: ${count}</li>`;
+                }
+                resumoHtml += `</ul>`;
+            }
+
+            document.getElementById('resumo-download').innerHTML = resumoHtml;
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            document.getElementById('resumo-download').innerHTML =
+                '<p style="color: red;">Erro ao carregar informações dos documentos.</p>';
+            document.getElementById('btn-download').disabled = true;
+        });
+
+    // Configurar formulário de download
+    document.getElementById('btn-download').addEventListener('click', function(e) {
+        e.preventDefault();
+
+        const nomeArquivo = document.getElementById('nome_arquivo').value.trim() || 'documentos_selecionados';
+
+        // Criar formulário oculto para POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "documentos:download_lote" %}';
+
+        // Adicionar CSRF token
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        form.appendChild(csrfToken);
+
+        // Adicionar IDs dos documentos
+        documentoIds.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'selected_documentos';
+            input.value = id;
+            form.appendChild(input);
+        });
+
+        // Adicionar nome do arquivo
+        const nomeInput = document.createElement('input');
+        nomeInput.type = 'hidden';
+        nomeInput.name = 'nome_arquivo';
+        nomeInput.value = nomeArquivo;
+        form.appendChild(nomeInput);
+
+        // Enviar formulário
+        document.body.appendChild(form);
+        form.submit();
+    });
+});
+</script>
+{% endblock %}

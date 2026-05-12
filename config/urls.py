@@ -11,11 +11,11 @@ from apps.core import views_custom
 urlpatterns = [
     # URLs de autenticação
     path('accounts/login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
-    path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('accounts/logout/', views_custom.custom_logout, name='logout'),
     path('sair/', views_custom.custom_logout, name='custom_logout'),
-    
+
     path('admin/', admin.site.urls),
-    
+
     # URLs do sistema
     path('', include('apps.core.urls')),
     path('documentos/', include('apps.documentos.urls')),

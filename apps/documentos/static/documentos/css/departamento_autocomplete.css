@@ -35,17 +35,10 @@
     color: white;
 }
 
-.departamento-sigla {
-    font-weight: bold;
-    color: #495057;
-}
-
 .departamento-nome {
     color: #6c757d;
-    margin-left: 8px;
 }
 
-.ui-state-active .departamento-sigla,
 .ui-state-active .departamento-nome {
     color: white;
 }

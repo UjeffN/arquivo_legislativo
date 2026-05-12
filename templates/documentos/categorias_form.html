@@ -1,0 +1,170 @@
+{% extends 'layouts/painel.html' %}
+
+{% block title %}{{ titulo }} - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1 class="page-title">{{ titulo }}</h1>
+    <p class="page-description">{{ subtitulo }}</p>
+</div>
+
+<div class="categoria-form-layout">
+    <div class="card fade-in">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-tags mr-2 text-blue-600"></i>
+                Dados da Categoria
+            </h2>
+        </div>
+        <div class="card-body">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.nome.id_for_label }}" class="form-label">{{ form.nome.label }}</label>
+                        {{ form.nome }}
+                        {% if form.nome.help_text %}
+                            <p class="form-help">{{ form.nome.help_text }}</p>
+                        {% endif %}
+                        {% for error in form.nome.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.descricao.id_for_label }}" class="form-label">{{ form.descricao.label }}</label>
+                        {{ form.descricao }}
+                        {% if form.descricao.help_text %}
+                            <p class="form-help">{{ form.descricao.help_text }}</p>
+                        {% endif %}
+                        {% for error in form.descricao.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <label class="status-toggle">
+                    {{ form.ativo }}
+                    <span>
+                        <strong>Categoria ativa</strong>
+                        <small>Categorias inativas deixam de aparecer em novos cadastros, mas continuam preservando os documentos ja catalogados.</small>
+                    </span>
+                </label>
+                {% for error in form.ativo.errors %}
+                    <p class="form-error">{{ error }}</p>
+                {% endfor %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-2"></i>
+                        {{ acao }}
+                    </button>
+                    <a href="{% url 'documentos:categorias_listar' %}" class="btn btn-outline">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Voltar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card fade-in">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                Orientacoes
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="help-list">
+                <p><strong>Nome:</strong> mantenha uma classificacao clara e padronizada para facilitar a busca.</p>
+                <p><strong>Descricao:</strong> use para orientar a equipe sobre quando aplicar a categoria.</p>
+                <p><strong>Exclusao:</strong> ao excluir, a categoria sera inativada para manter os documentos vinculados intactos.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.categoria-form-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 2rem;
+    align-items: start;
+}
+
+.form-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.space-y-6 > * + * { margin-top: 1.5rem; }
+.mr-2 { margin-right: 0.5rem; }
+.text-blue-600 { color: #2563eb; }
+
+.form-help,
+.form-error {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-help { color: #64748b; }
+.form-error { color: #ef4444; }
+
+.status-toggle {
+    display: flex;
+    gap: 0.875rem;
+    align-items: flex-start;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    background: #f8fafc;
+    cursor: pointer;
+}
+
+.status-toggle strong {
+    display: block;
+    color: #1e293b;
+}
+
+.status-toggle small {
+    display: block;
+    color: #64748b;
+}
+
+.form-check-input {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.2rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.help-list {
+    display: grid;
+    gap: 1rem;
+    color: #475569;
+    font-size: 0.925rem;
+}
+
+@media (max-width: 1024px) {
+    .categoria-form-layout {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

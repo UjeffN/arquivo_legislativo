@@ -1,0 +1,89 @@
+{% extends 'layouts/painel.html' %}
+
+{% block title %}Confirmar Exclusão de Caixa{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1 class="page-title">Confirmar Exclusão da Caixa "{{ caixa.nome }}"</h1>
+    <p class="page-description">
+        A caixa será removida, mas os documentos não serão apagados.
+        Eles serão desvinculados e continuarão acessíveis no sistema.
+    </p>
+</div>
+
+<div class="card mb-6 fade-in">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-triangle-exclamation mr-2 text-red-600"></i>
+            Documentos Que Serão Desvinculados ({{ total_documentos }})
+        </h2>
+    </div>
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Documento</th>
+                    <th>Tipo</th>
+                    <th>Departamento</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in documentos %}
+                <tr>
+                    <td>{{ doc.id }}</td>
+                    <td>{{ doc.nome }}</td>
+                    <td>{{ doc.tipo_documento.nome }}</td>
+                    <td>{{ doc.departamento.nome|default:"Sem departamento" }}</td>
+                    <td>{{ doc.data_documento|date:"d/m/Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-6 text-gray-500">
+                        Esta caixa não possui documentos vinculados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card fade-in">
+    <div class="card-body">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+            <p class="text-sm text-gray-600 mb-0">
+                Ao confirmar, todos os documentos acima ficarão sem caixa e a caixa será excluída.
+            </p>
+            <div class="flex gap-2">
+                <a href="{% url 'caixas:detalhe_caixa' caixa.pk %}" class="btn btn-outline">
+                    <i class="fas fa-arrow-left"></i>
+                    Cancelar
+                </a>
+                <form method="POST" action="{% url 'caixas:excluir_caixa' caixa.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="confirmar_exclusao" value="1">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i>
+                        Confirmar Exclusão
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.btn-danger {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: #ffffff;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}
+</style>
+{% endblock %}

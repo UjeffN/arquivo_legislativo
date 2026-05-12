@@ -1,189 +1,371 @@
-{% extends 'base.html' %}
+{% extends 'layouts/painel.html' %}
+{% load querystring_tags %}
 
-{% block title %}Pesquisa de Documentos - Sistema de Arquivo Digital{% endblock %}
+{% block title %}Pesquisar Documentos - Sistema de Arquivo Digital{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-0">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-search"></i>
-                    Pesquisa de Documentos
-                </h5>
-            </div>
-            <div class="card-body">
-                <form method="GET" action="{% url 'documentos:pesquisar' %}">
-                    <div class="row g-3">
-                        <div class="col-md-10">
-                            <div class="form-group">
-                                <input type="text" 
-                                       name="q" 
-                                       class="form-control" 
-                                       placeholder="Digite o termo para pesquisar..."
-                                       value="{{ query }}"
-                                       autofocus>
-                            </div>
+<!-- Page Header -->
+<div class="page-header fade-in">
+    <h1 class="page-title">Pesquisar Documentos</h1>
+    <p class="page-description">Busque documentos por texto extraído via OCR ou metadados</p>
+</div>
+
+<!-- Search Form -->
+<div class="card mb-6 fade-in">
+    <div class="card-body">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Search Input -->
+                <div class="lg:col-span-2">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-search mr-2"></i>
+                            Termo de Busca
+                        </label>
+                        <div class="input-group">
+                            <i class="fas fa-search input-icon"></i>
+                            <input type="text"
+                                   name="q"
+                                   value="{{ request.GET.q }}"
+                                   class="form-control input-with-icon"
+                                   placeholder="Digite o texto ou número do documento">
                         </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="fas fa-search"></i>
-                                    Pesquisar
-                                </button>
+                    </div>
+                </div>
+
+                <!-- Document Type -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-tag mr-2"></i>
+                        Tipo
+                    </label>
+                    <select name="tipo" class="form-control">
+                        <option value="">Todos os tipos</option>
+                        {% for t in tipos_documento %}
+                            <option value="{{ t.id }}" {% if request.GET.tipo == t.id|stringformat:"s" %}selected{% endif %}>{{ t.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Department -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-building mr-2"></i>
+                        Departamento
+                    </label>
+                    <select name="departamento" class="form-control">
+                        <option value="">Todos os departamentos</option>
+                        {% for d in departamentos %}
+                            <option value="{{ d.id }}" {% if request.GET.departamento == d.id|stringformat:"s" %}selected{% endif %}>{{ d.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Date Range -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-calendar mr-2"></i>
+                        Data Inicial
+                    </label>
+                    <input type="date" name="data_inicio" value="{{ request.GET.data_inicio }}" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-calendar mr-2"></i>
+                        Data Final
+                    </label>
+                    <input type="date" name="data_fim" value="{{ request.GET.data_fim }}" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search mr-2"></i>
+                            Pesquisar
+                        </button>
+                        <a href="{% url 'documentos:pesquisar' %}" class="btn btn-outline">
+                            <i class="fas fa-times mr-2"></i>
+                            Limpar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Search Results -->
+<div class="card fade-in">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-search mr-2 text-blue-500"></i>
+            Resultados da Busca
+        </h2>
+        <div class="text-sm text-gray-500">
+            {% if documentos %}
+                Encontrados {{ documentos|length }} documento{{ documentos|length|pluralize }}
+            {% else %}
+                Nenhum documento encontrado
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        {% if documentos %}
+            <!-- Results List -->
+            <div class="space-y-4">
+                {% for documento in documentos %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow clickable-list-item" data-href="{% url 'documentos:detalhe' documento.id %}" tabindex="0">
+                    <div class="flex items-start gap-4">
+                        <!-- Document Icon -->
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-file-pdf text-red-600 text-xl"></i>
+                        </div>
+
+                        <!-- Document Info -->
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 class="font-semibold text-gray-900 mb-1">
+                                        {{ documento.nome|default:documento.numero_documento|default:"Sem título" }}
+                                    </h3>
+                                    {% if documento.numero_documento %}
+                                            <p class="text-sm text-gray-500 mb-2">Ref: {{ documento.numero_documento }}</p>
+                                        {% endif %}
+
+                                    <!-- Metadata -->
+                                    <div class="flex flex-wrap gap-2 mb-3">
+                                        {% if documento.tipo_documento %}
+                                            <span class="badge badge-primary">{{ documento.tipo_documento }}</span>
+                                        {% endif %}
+                                        {% if documento.departamento %}
+                                            <span class="badge badge-secondary">{{ documento.departamento }}</span>
+                                        {% endif %}
+                                        <span class="badge badge-info">
+                                            <i class="fas fa-calendar mr-1"></i>
+                                            {{ documento.data_documento|date:"d/m/Y" }}
+                                        </span>
+                                    </div>
+
+                                    <!-- OCR Text Preview -->
+                                    {% if documento.texto_extraido %}
+                                        <div class="bg-gray-50 rounded p-3 mb-3">
+                                            <p class="text-sm text-gray-700 line-clamp-3">
+                                                {{ documento.texto_extraido|truncatewords:30 }}
+                                            </p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex gap-2">
+                                    <a href="{% url 'documentos:detalhe' documento.id %}" class="btn btn-sm btn-outline" title="Visualizar">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if documento.arquivo %}
+                                        <a href="{{ documento.arquivo.url }}" class="btn btn-sm btn-outline" title="Download" download>
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-{% if query %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i>
-            Encontrados <strong>{{ total_resultados }}</strong> resultados para "<strong>{{ query }}</strong>"
-        </div>
-    </div>
-</div>
-{% endif %}
-
-{% if documentos %}
-<div class="row">
-    <div class="col-12">
-        <div class="card border-0">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-file-pdf"></i>
-                    Resultados da Pesquisa
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Tipo</th>
-                                <th>Departamento</th>
-                                <th>Caixa</th>
-                                <th>Data</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for documento in documentos %}
-                            <tr>
-                                <td>
-                                    <a href="{% url 'documentos:detalhe' documento.id %}" 
-                                       class="text-decoration-none">
-                                        {{ documento.nome|default:"Sem nome" }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <span class="badge bg-primary">
-                                        {{ documento.tipo_documento.nome|default:"Não definido" }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-info">
-                                        {{ documento.departamento.nome|default:"Não definido" }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="{% url 'caixas:detalhe_caixa' documento.caixa.id %}" 
-                                       class="badge bg-secondary text-decoration-none">
-                                        {{ documento.caixa.numero }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <small>{{ documento.criado_em|date:"d/m/Y" }}</small>
-                                </td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="{% url 'documentos:detalhe' documento.id %}" 
-                                           class="btn btn-sm btn-outline-primary" 
-                                           title="Ver detalhes">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{% url 'documentos:editar' documento.id %}" 
-                                           class="btn btn-sm btn-outline-warning" 
-                                           title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{% url 'documentos:download' documento.id %}" 
-                                           class="btn btn-sm btn-outline-success" 
-                                           title="Download">
-                                            <i class="fas fa-download"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
                 </div>
-                
-                <!-- Paginação -->
-                {% if documentos.has_other_pages %}
-                <nav aria-label="Paginação">
-                    <ul class="pagination justify-content-center">
-                        {% if documentos.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?q={{ query }}&page={{ documentos.previous_page_number }}">
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated or page_obj.paginator.count > 0 %}
+            <div class="flex items-center justify-between mt-6 pt-6 border-t">
+                <div class="text-sm text-gray-700">
+                    Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ page_obj.paginator.count }} resultados
+                    {% if pagination_state.show_all_limited %}
+                        <span class="text-gray-500">(limitado a {{ pagination_state.show_all_limit }})</span>
+                    {% endif %}
+                </div>
+                <div class="flex gap-2">
+                    {% if pagination_state.show_all %}
+                        <a href="?{% querystring page='' per_page='' %}" class="btn btn-outline btn-sm">
+                            Voltar à paginação
+                        </a>
+                    {% else %}
+                        <a href="?{% querystring page='' per_page='all' %}" class="btn btn-outline btn-sm">
+                            Mostrar todos
+                        </a>
+                        {% if page_obj.has_previous %}
+                            <a href="?{% querystring page=page_obj.previous_page_number %}" class="btn btn-outline btn-sm">
                                 <i class="fas fa-chevron-left"></i>
+                                Anterior
                             </a>
-                        </li>
                         {% endif %}
-                        
-                        {% for num in documentos.paginator.page_range %}
-                        {% if documentos.number == num %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ num }}</span>
-                        </li>
-                        {% elif num > documentos.number|add:'-3' and num < documentos.number|add:'3' %}
-                        <li class="page-item">
-                            <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
-                        </li>
+
+                        {% if page_obj.paginator.num_pages > 1 %}
+                            <span class="btn btn-outline btn-sm">
+                                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                            </span>
                         {% endif %}
-                        {% endfor %}
-                        
-                        {% if documentos.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?q={{ query }}&page={{ documentos.next_page_number }}">
+
+                        {% if page_obj.has_next %}
+                            <a href="?{% querystring page=page_obj.next_page_number %}" class="btn btn-outline btn-sm">
+                                Próximo
                                 <i class="fas fa-chevron-right"></i>
                             </a>
-                        </li>
                         {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
+                    {% endif %}
+                </div>
             </div>
-        </div>
-    </div>
-</div>
-{% else %}
-{% if query %}
-<div class="row">
-    <div class="col-12">
-        <div class="card border-0">
-            <div class="card-body text-center py-5">
-                <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Nenhum documento encontrado</h5>
-                <p class="text-muted">
-                    Não foram encontrados documentos para o termo "<strong>{{ query }}</strong>".
+            {% endif %}
+        {% else %}
+            <!-- No Results -->
+            <div class="text-center py-12">
+                <div class="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <i class="fas fa-search text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhum documento encontrado</h3>
+                <p class="text-gray-500 mb-4">
+                    {% if request.GET.q %}
+                        Não encontramos documentos para "<strong>{{ request.GET.q }}</strong>"
+                    {% else %}
+                        Use o formulário acima para pesquisar documentos
+                    {% endif %}
                 </p>
-                <a href="{% url 'documentos:listar' %}" class="btn btn-primary">
-                    <i class="fas fa-list"></i>
-                    Ver Todos os Documentos
-                </a>
+                <div class="space-y-2">
+                    <p class="text-sm text-gray-400">Sugestões:</p>
+                    <ul class="text-sm text-gray-400 text-left max-w-md mx-auto">
+                        <li>• Verifique a ortografia do termo pesquisado</li>
+                        <li>• Tente usar termos mais genéricos</li>
+                        <li>• Use menos filtros de busca</li>
+                        <li>• Pesquise por número de referência</li>
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Search Tips -->
+<div class="card mt-6 fade-in">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>
+            Dicas de Busca
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="font-semibold text-gray-900 mb-3">Busca por Texto</h4>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>• Use palavras-chave específicas</li>
+                    <li>• Busque por nomes, datas ou números</li>
+                    <li>• A busca é case-insensitive</li>
+                    <li>• OCR extrai texto automaticamente</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-semibold text-gray-900 mb-3">Filtros Avançados</h4>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>• Combine tipo + departamento</li>
+                    <li>• Use intervalos de datas</li>
+                    <li>• Filtre por número de referência</li>
+                    <li>• Limpe filtros para ampliar busca</li>
+                </ul>
             </div>
         </div>
     </div>
 </div>
-{% endif %}
-{% endif %}
+
+<style>
+/* Additional styles for this page */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+
+.space-y-2 > * + * { margin-top: 0.5rem; }
+.space-y-3 > * + * { margin-top: 0.75rem; }
+.space-y-4 > * + * { margin-top: 1rem; }
+
+.mt-6 { margin-top: 1.5rem; }
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
+.pt-6 { padding-top: 1.5rem; }
+.py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+
+.w-12 { width: 3rem; }
+.w-16 { width: 4rem; }
+.h-12 { height: 3rem; }
+.h-16 { height: 4rem; }
+
+.max-w-md { max-width: 28rem; }
+
+.flex { display: flex; }
+.flex-1 { flex: 1 1 0%; }
+.flex-shrink-0 { flex-shrink: 0; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; }
+
+.font-semibold { font-weight: 600; }
+
+.text-gray-400 { color: #9ca3af; }
+.text-gray-500 { color: #64748b; }
+.text-gray-600 { color: #475569; }
+.text-gray-700 { color: #374151; }
+.text-gray-900 { color: #1e293b; }
+
+.text-red-600 { color: #dc2626; }
+
+.bg-gray-50 { background-color: #f9fafb; }
+.bg-gray-100 { background-color: #f3f4f6; }
+.bg-red-100 { background-color: #fef2f2; }
+
+.border { border-width: 1px; }
+.border-gray-200 { border-color: #e5e7eb; }
+.border-t { border-top-width: 1px; }
+
+.rounded { border-radius: 0.375rem; }
+.rounded-lg { border-radius: 0.5rem; }
+
+.transition-shadow { transition-property: box-shadow; }
+.hover\:shadow-md:hover { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@media (min-width: 768px) {
+    .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+    .lg\:col-span-2 { grid-column: span 2 / span 2; }
+    .lg\:col-span-4 { grid-column: span 4 / span 4; }
+}
+</style>
 {% endblock %}

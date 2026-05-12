@@ -1,13 +1,13 @@
 (function($) {
     'use strict';
-    
+
     $(document).ready(function() {
         // Inicializar autocomplete para campos de departamento
         $('.departamento-autocomplete').each(function() {
             var $input = $(this);
             var autocompleteUrl = $input.data('autocomplete-url');
             var $hiddenField = $('#' + $input.attr('id') + '_hidden');
-            
+
             // Criar campo hidden para armazenar o ID
             if ($hiddenField.length === 0) {
                 $hiddenField = $('<input>')
@@ -20,7 +20,7 @@
                 // Remover name do campo visível para não conflitar
                 $input.removeAttr('name');
             }
-            
+
             $input.autocomplete({
                 source: function(request, response) {
                     $.ajax({
@@ -40,18 +40,18 @@
                 minLength: 2,
                 delay: 300,
                 select: function(event, ui) {
-                    // Preencher campo visível com texto formatado
+                    // Preencher campo visível com o nome do departamento
                     $input.val(ui.item.text);
                     // Armazenar ID no campo hidden
                     $hiddenField.val(ui.item.id);
-                    
+
                     // Disparar evento change para validação
                     $hiddenField.trigger('change');
-                    
+
                     return false;
                 },
                 focus: function(event, ui) {
-                    // Mostrar texto formatado no foco
+                    // Mostrar nome no foco
                     $input.val(ui.item.text);
                     return false;
                 },
@@ -59,14 +59,13 @@
                     // Customizar renderização dos itens
                     $(this).data('ui-autocomplete')._renderItem = function(ul, item) {
                         var $li = $('<div class="ui-menu-item">')
-                            .append('<span class="departamento-sigla">' + item.sigla + '</span>' +
-                                   '<span class="departamento-nome">' + item.nome + '</span>');
-                        
+                            .append('<span class="departamento-nome">' + item.nome + '</span>');
+
                         return $li.appendTo(ul);
                     };
                 }
             });
-            
+
             // Se já tiver um valor, carregar os dados
             var hiddenValue = $hiddenField.val();
             if (hiddenValue) {
@@ -91,7 +90,7 @@
                     }
                 });
             }
-            
+
             // Limpar campo hidden se o input for limpo
             $input.on('input', function() {
                 if ($(this).val().trim() === '') {
@@ -101,5 +100,5 @@
             });
         });
     });
-    
+
 })(django.jQuery || jQuery);

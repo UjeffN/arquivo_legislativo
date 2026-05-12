@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arquivo Digital - Câmara Municipal de Parauapebas</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='12' y='6' width='40' height='52' rx='6' fill='%231d4ed8'/%3E%3Crect x='20' y='18' width='24' height='4' rx='2' fill='white'/%3E%3Crect x='20' y='27' width='24' height='4' rx='2' fill='white'/%3E%3Crect x='20' y='36' width='14' height='4' rx='2' fill='white'/%3E%3Crect x='36' y='36' width='8' height='12' rx='2' fill='%2393c5fd'/%3E%3C/svg%3E">
+    {% load static %}
+
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Theme CSS -->
+    <link href="{% static 'css/figma-theme.css' %}?v=20240429" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-gradient::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2v-4h4v-2H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+        .logo-container {
+            transition: all 0.3s ease;
+        }
+        .logo-container:hover {
+            transform: scale(1.05);
+        }
+        .feature-card {
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-['Inter']">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center gap-4">
+                    <div class="h-14 w-14 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-3xl">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <div class="hidden sm:block border-l border-slate-200 pl-4">
+                        <span class="block text-blue-900 font-bold text-lg leading-tight uppercase">Sistema de Arquivo Digital</span>
+                        <span class="block text-slate-500 text-xs font-semibold tracking-wider uppercase">Câmara Municipal de Parauapebas</span>
+
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'login' %}" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2.5 rounded-lg font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-200">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Acessar Sistema
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient py-20 text-white relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-8">
+                    <div class="inline-flex items-center gap-2 bg-blue-900/40 backdrop-blur-sm px-4 py-2 rounded-full border border-blue-400/30">
+                        <span class="flex h-2 w-2 rounded-full bg-blue-400 animate-pulse"></span>
+                        <span class="text-xs font-bold tracking-widest uppercase">Sistema de Arquivo Digital</span>
+                    </div>
+                    <h1 class="text-5xl sm:text-6xl font-extrabold leading-tight">
+                        Gestão Documental <span class="text-blue-300 italic">Inteligente</span>
+                    </h1>
+                    <p class="text-lg text-blue-100 max-w-xl leading-relaxed">
+                        Modernizando o acesso à informação pública com tecnologia de ponta. Armazenamento seguro, busca instantânea e organização eficiente para a Câmara de Parauapebas.
+                    </p>
+                    <div class="flex flex-wrap gap-4 pt-4">
+                        <a href="#funcionalidades" class="bg-white text-blue-900 hover:bg-blue-50 px-8 py-4 rounded-xl font-bold transition-all">
+                            Conhecer Recursos
+                        </a>
+                        <a href="{% url 'login' %}" class="bg-blue-600/30 hover:bg-blue-600/50 backdrop-blur-md border border-blue-400/30 text-white px-8 py-4 rounded-xl font-bold transition-all">
+                            Entrar no Portal
+                        </a>
+                    </div>
+                </div>
+                <div class="hidden lg:flex justify-center items-center">
+                    <div class="relative w-full max-w-md aspect-square bg-white/5 rounded-3xl border border-white/10 backdrop-blur-sm p-12 flex flex-col items-center justify-center text-center">
+                         <i class="fas fa-file-invoice text-9xl text-white/20 mb-8"></i>
+                        <div class="grid grid-cols-2 gap-4 w-full">
+                            <div class="bg-white/10 p-4 rounded-2xl border border-white/10">
+                                <div class="text-3xl font-bold">{{ total_documentos }}</div>
+                                <div class="text-xs text-blue-200 uppercase tracking-tighter">Documentos</div>
+                            </div>
+                            <div class="bg-white/10 p-4 rounded-2xl border border-white/10">
+                                <div class="text-3xl font-bold">{{ total_caixas }}</div>
+                                <div class="text-xs text-blue-200 uppercase tracking-tighter">Caixas</div>
+                            </div>
+                            <div class="bg-white/10 p-4 rounded-2xl border border-white/10 col-span-2">
+                                <div class="text-3xl font-bold">{{ total_departamentos }}</div>
+                                <div class="text-xs text-blue-200 uppercase tracking-tighter">Departamentos</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="funcionalidades" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-blue-900 mb-4">Soluções Completas para o Arquivo</h2>
+                <p class="text-slate-500">Desenvolvido para atender as demandas de transparência e eficiência do Poder Legislativo.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="feature-card p-8 rounded-2xl bg-slate-50">
+                    <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-blue-700 text-2xl mb-6 shadow-sm">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">OCR Avançado</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">Extração automática de texto e metadados de arquivos digitalizados para busca instantânea.</p>
+                </div>
+
+                <div class="feature-card p-8 rounded-2xl bg-slate-50">
+                    <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center text-green-700 text-2xl mb-6 shadow-sm">
+                        <i class="fas fa-search-plus"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Busca Rápida</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">Localize qualquer documento em segundos usando filtros inteligentes por data, tipo ou assunto.</p>
+                </div>
+
+                <div class="feature-card p-8 rounded-2xl bg-slate-100/50">
+                    <div class="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700 text-2xl mb-6 shadow-sm">
+                        <i class="fas fa-box-archive"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Arquivo Físico</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">Controle total sobre a localização física das caixas, integrando o arquivo digital ao presencial.</p>
+                </div>
+
+                <div class="feature-card p-8 rounded-2xl bg-slate-50">
+                    <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center text-purple-700 text-2xl mb-6 shadow-sm">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Segurança</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">Logs de auditoria completos e controle de acesso rigoroso para garantir a integridade dos dados.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-10 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row justify-between items-start gap-12 lg:gap-8">
+                <!-- Informações Institucionais -->
+                <div class="lg:w-2/3 space-y-6">
+                    <div class="flex items-center gap-4">
+                        <img src="{% static 'images/logo-cmp.png' %}" alt="Logo CMP" class="h-12 w-auto">
+                        <div class="border-l border-slate-700 pl-4">
+                            <span class="block text-white font-bold uppercase tracking-widest text-sm">Câmara Municipal</span>
+                            <span class="block text-slate-500 text-[10px] font-semibold">Parauapebas - PA</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-[13px] leading-relaxed">
+                        <div class="space-y-2">
+                            <p class="flex items-start gap-2">
+                                <i class="fas fa-clock mt-1 text-blue-500"></i>
+                                <span><strong>Atendimento:</strong> Das 8h às 14h</span>
+                            </p>
+                            <p class="flex items-start gap-2">
+                                <i class="fas fa-map-marker-alt mt-1 text-blue-500"></i>
+                                <span>Avenida Sônia Cortês, Quadra: 33, Lote Especial, Beira Rio II - CEP: 68515-000</span>
+                            </p>
+                        </div>
+                        <div class="space-y-2">
+                            <p class="flex items-start gap-2">
+                                <i class="fas fa-envelope mt-1 text-blue-500"></i>
+                                <a href="mailto:atendimento@parauapebas.pa.leg.br" class="hover:text-white transition-colors">atendimento@parauapebas.pa.leg.br</a>
+                            </p>
+                            <p class="flex items-start gap-2">
+                                <i class="fas fa-phone mt-1 text-blue-500"></i>
+                                <span>094 98407-6124 (8h às 14h)</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tecnologia -->
+                <div class="lg:w-1/3 flex flex-col sm:flex-row lg:flex-col items-start gap-6 pt-2">
+                    <div class="flex items-center gap-3">
+                        <img src="{% static 'images/logo-dti.png' %}" alt="Logo DTI" class="h-10 w-auto opacity-80 hover:opacity-100 transition-opacity">
+                        <div class="border-l border-slate-800 pl-3">
+                            <span class="block text-white font-bold text-sm tracking-tight">DTI</span>
+                            <span class="block text-slate-600 text-[9px] font-bold uppercase tracking-tighter">Departamento de Tecnologia da Informação</span>
+                        </div>
+                    </div>
+                    <div class="text-[12px] space-y-1">
+                        <p class="flex items-center gap-2">
+                            <i class="fas fa-envelope text-blue-500"></i>
+                            <a href="mailto:dti@parauapebas.pe.leg.br" class="hover:text-white transition-colors">dti@parauapebas.pa.leg.br</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 pt-6 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] uppercase tracking-widest font-medium">
+                <p>&copy; {% now "Y" %} Câmara Municipal de Parauapebas. Todos os direitos reservados.</p>
+                <p class="text-slate-600">Desenvolvido pelo Departamento de Tecnologia da Informação</p>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

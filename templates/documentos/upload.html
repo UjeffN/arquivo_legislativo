@@ -1,0 +1,476 @@
+{% extends 'layouts/painel.html' %}
+
+{% block title %}Upload de Documento - Sistema de Arquivo Digital{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header fade-in">
+    <h1 class="page-title">Upload de Documento</h1>
+    <p class="page-description">Adicione um novo documento ao sistema com processamento OCR automático</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Upload Form -->
+    <div class="lg:col-span-2">
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-upload mr-2 text-blue-500"></i>
+                    Informações do Documento
+                </h2>
+            </div>
+            <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="space-y-6" id="uploadForm">
+                    {% csrf_token %}
+
+                    <!-- File Upload -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-file-pdf mr-2"></i>
+                            {{ form.arquivo_pdf.label }}
+                        </label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600 mb-2">Arraste o arquivo PDF aqui ou clique para selecionar</p>
+                            <p class="text-sm text-gray-500">Tamanho máximo: 500MB</p>
+                            <div class="mt-4">
+                                {{ form.arquivo_pdf }}
+                            </div>
+                        </div>
+                        {% if form.arquivo_pdf.errors %}
+                            <div class="mt-3 text-red-500 text-sm">
+                                {% for error in form.arquivo_pdf.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.arquivo_pdf.help_text %}
+                            <p class="mt-2 text-sm text-gray-500">{{ form.arquivo_pdf.help_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Note: This form only handles file upload. Other fields will be filled by OCR -->
+
+                    <!-- Submit Buttons -->
+                    <div class="flex gap-3 pt-4 border-t">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-upload mr-2"></i>
+                            Processar Documento
+                        </button>
+                        <a href="{% url 'documentos:listar' %}" class="btn btn-outline">
+                            <i class="fas fa-times mr-2"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Info -->
+    <div class="lg:col-span-1">
+        <div class="space-y-6">
+            <!-- Instructions -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                        Instruções
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-blue-600 font-semibold text-sm">1</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Selecione o arquivo</p>
+                                <p class="text-xs text-gray-500">Apenas arquivos PDF são aceitos</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-blue-600 font-semibold text-sm">2</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Preencha os dados</p>
+                                <p class="text-xs text-gray-500">Tipo e departamento são obrigatórios</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-blue-600 font-semibold text-sm">3</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Processamento automático</p>
+                                <p class="text-xs text-gray-500">OCR extrairá texto do documento</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-blue-600 font-semibold text-sm">4</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Salve o documento</p>
+                                <p class="text-xs text-gray-500">Sistema organizará automaticamente</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requirements -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-check-circle mr-2 text-green-500"></i>
+                        Requisitos
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check text-green-500 text-sm"></i>
+                            <span class="text-sm text-gray-700">Formato PDF</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check text-green-500 text-sm"></i>
+                            <span class="text-sm text-gray-700">Tamanho máximo: 500MB</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check text-green-500 text-sm"></i>
+                            <span class="text-sm text-gray-700">Qualidade mínima: 200 DPI</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check text-green-500 text-sm"></i>
+                            <span class="text-sm text-gray-700">Texto legível para OCR</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check text-green-500 text-sm"></i>
+                            <span class="text-sm text-gray-700">Orientação: Retrato</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Uploads -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-clock mr-2 text-gray-500"></i>
+                        Uploads Recentes
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-file-pdf text-red-500"></i>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-900">Ofício nº 123/2024</p>
+                                <p class="text-xs text-gray-500">Há 2 horas</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-file-pdf text-red-500"></i>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-900">Memorando Interno</p>
+                                <p class="text-xs text-gray-500">Há 5 horas</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-file-pdf text-red-500"></i>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-900">Relatório Mensal</p>
+                                <p class="text-xs text-gray-500">Ontem</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Additional styles for this page */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.gap-3 { gap: 0.75rem; }
+.gap-6 { gap: 1.5rem; }
+.gap-8 { gap: 2rem; }
+
+.space-y-3 > * + * { margin-top: 0.75rem; }
+.space-y-4 > * + * { margin-top: 1rem; }
+.space-y-6 > * + * { margin-top: 1.5rem; }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-1 { flex: 1 1 0%; }
+.flex-shrink-0 { flex-shrink: 0; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+
+.w-8 { width: 2rem; }
+.h-8 { height: 2rem; }
+
+.rounded { border-radius: 0.375rem; }
+.rounded-lg { border-radius: 0.5rem; }
+
+.border-2 { border-width: 2px; }
+.border-dashed { border-style: dashed; }
+.border-t { border-top-width: 1px; }
+
+.hidden { display: none; }
+
+.text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+
+.text-gray-400 { color: #9ca3af; }
+.text-gray-500 { color: #64748b; }
+.text-gray-700 { color: #374151; }
+.text-gray-900 { color: #1e293b; }
+
+.text-blue-500 { color: #3b82f6; }
+.text-blue-600 { color: #2563eb; }
+.text-green-500 { color: #10b981; }
+.text-red-500 { color: #ef4444; }
+
+.bg-blue-50 { background-color: #eff6ff; }
+.bg-blue-100 { background-color: #dbeafe; }
+
+.hover\:text-red-700:hover { color: #b91c1c; }
+.hover\:border-blue-500:hover { border-color: #3b82f6; }
+
+.transition-colors { transition-property: color, background-color, border-color; }
+.transition-timing-function { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+.transition-duration { transition-duration: 150ms; }
+
+.upload-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.upload-overlay.hidden {
+    display: none !important;
+}
+
+.upload-modal {
+    width: min(92vw, 460px);
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    text-align: center;
+}
+
+.upload-modal h3 {
+    margin: 0 0 0.5rem;
+    color: #0f172a;
+}
+
+.upload-progress-track {
+    width: 100%;
+    height: 12px;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-top: 0.75rem;
+}
+
+.upload-progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    transition: width 0.2s ease;
+}
+
+.upload-progress-text {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e3a8a;
+}
+
+.upload-hint {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+@media (min-width: 1024px) {
+    .lg\:col-span-1 { grid-column: span 1 / span 1; }
+    .lg\:col-span-2 { grid-column: span 2 / span 2; }
+    .lg\:col-span-3 { grid-column: span 3 / span 3; }
+}
+</style>
+
+<div id="uploadOverlay" class="upload-overlay hidden">
+    <div class="upload-modal">
+        <h3>Enviando arquivo...</h3>
+        <p id="uploadStatusText">Preparando upload</p>
+        <div class="upload-progress-track">
+            <div id="uploadProgressBar" class="upload-progress-bar"></div>
+        </div>
+        <div id="uploadProgressText" class="upload-progress-text">0%</div>
+        <p class="upload-hint">Nao feche esta pagina durante o envio e processamento OCR.</p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('uploadForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const fileInput = form ? form.querySelector('input[type="file"]') : null;
+    const dropZone = document.querySelector('.border-dashed');
+    const overlay = document.getElementById('uploadOverlay');
+    const progressBar = document.getElementById('uploadProgressBar');
+    const progressText = document.getElementById('uploadProgressText');
+    const statusText = document.getElementById('uploadStatusText');
+    const maxFileSize = 500 * 1024 * 1024;
+    let uploading = false;
+
+    if (!form || !fileInput) {
+        return;
+    }
+
+    function setProgress(percent, statusMessage) {
+        const clamped = Math.max(0, Math.min(100, percent));
+        if (progressBar) progressBar.style.width = clamped + '%';
+        if (progressText) progressText.textContent = clamped + '%';
+        if (statusMessage && statusText) statusText.textContent = statusMessage;
+    }
+
+    function formatBytes(bytes) {
+        if (!bytes) return '0 Bytes';
+        const units = ['Bytes', 'KB', 'MB', 'GB'];
+        const index = Math.floor(Math.log(bytes) / Math.log(1024));
+        const value = bytes / Math.pow(1024, index);
+        return value.toFixed(2) + ' ' + units[index];
+    }
+
+    function validateFile(file) {
+        if (!file) {
+            alert('Selecione um arquivo PDF.');
+            return false;
+        }
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            alert('Apenas arquivos PDF sao permitidos.');
+            return false;
+        }
+        if (file.size > maxFileSize) {
+            alert('Arquivo maior que o limite de 500MB.');
+            return false;
+        }
+        return true;
+    }
+
+    if (dropZone) {
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dropZone.classList.add('border-blue-500', 'bg-blue-50');
+        });
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            if (!e.dataTransfer.files.length) return;
+            fileInput.files = e.dataTransfer.files;
+        });
+    }
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (uploading) return;
+
+        const file = fileInput.files[0];
+        if (!validateFile(file)) return;
+
+        uploading = true;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+        }
+        if (overlay) overlay.classList.remove('hidden');
+        setProgress(0, 'Enviando ' + formatBytes(file.size));
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', form.action || window.location.href, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+        xhr.upload.addEventListener('progress', function(event) {
+            if (!event.lengthComputable) return;
+            const percent = Math.round((event.loaded / event.total) * 90);
+            setProgress(percent, 'Enviando arquivo para o servidor');
+        });
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== XMLHttpRequest.DONE) return;
+
+            if (xhr.status >= 200 && xhr.status < 300) {
+                setProgress(95, 'Processando OCR, aguarde...');
+                let response = {};
+                try {
+                    response = JSON.parse(xhr.responseText || '{}');
+                } catch (err) {
+                    response = {};
+                }
+                if (response.redirect_url) {
+                    setProgress(100, 'Concluido, redirecionando...');
+                    window.location.href = response.redirect_url;
+                    return;
+                }
+                window.location.reload();
+                return;
+            }
+
+            uploading = false;
+            if (overlay) overlay.classList.add('hidden');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Processar Documento';
+            }
+
+            let message = 'Falha no envio do arquivo. Tente novamente.';
+            try {
+                const errorResponse = JSON.parse(xhr.responseText || '{}');
+                if (errorResponse.message) message = errorResponse.message;
+            } catch (err) {}
+            alert(message);
+        };
+
+        xhr.onerror = function() {
+            uploading = false;
+            if (overlay) overlay.classList.add('hidden');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Processar Documento';
+            }
+            alert('Erro de rede durante upload. Verifique sua conexao e tente novamente.');
+        };
+
+        xhr.send(new FormData(form));
+    });
+});
+</script>
+{% endblock %}

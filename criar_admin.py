@@ -1,37 +1,73 @@
+#!/usr/bin/env python3
+"""
+Cria ou redefine um superusuário de forma segura.
+
+Uso:
+  python criar_admin.py --username admin --email admin@example.com
+
+Senha:
+  - Define por variável de ambiente DJANGO_SUPERUSER_PASSWORD
+  - Ou solicita de forma interativa via terminal.
+"""
+
+import argparse
+import getpass
 import os
 import sys
+
 import django
-from django.conf import settings
 
-# Configuração mínima sem logs
-settings.configure(
-    DEBUG=True,
-    DATABASES={
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": "db.sqlite3",
-        }
-    },
-    INSTALLED_APPS=[
-        "django.contrib.auth",
-        "django.contrib.contenttypes",
-    ],
-    SECRET_KEY="temp-key-for-reset"
-)
-django.setup()
 
-from django.contrib.auth.models import User
+def _parse_args():
+    parser = argparse.ArgumentParser(description='Cria ou redefine superusuário Django.')
+    parser.add_argument('--username', default='admin', help='Nome de usuário (padrão: admin)')
+    parser.add_argument(
+        '--email',
+        default='admin@camara.parauapebas.pa.leg.br',
+        help='Email do superusuário',
+    )
+    return parser.parse_args()
 
-# Criar ou resetar usuário admin
-try:
-    user = User.objects.get(username="admin")
-    user.set_password("camara@1")
+
+def _obter_senha():
+    senha_env = os.getenv('DJANGO_SUPERUSER_PASSWORD')
+    if senha_env:
+        return senha_env
+    senha = getpass.getpass('Senha do superusuário: ').strip()
+    if not senha:
+        raise ValueError('Senha não pode ser vazia.')
+    return senha
+
+
+def main():
+    args = _parse_args()
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+    django.setup()
+
+    from django.contrib.auth import get_user_model
+
+    user_model = get_user_model()
+    senha = _obter_senha()
+    user, created = user_model.objects.get_or_create(
+        username=args.username,
+        defaults={'email': args.email, 'is_staff': True, 'is_superuser': True},
+    )
+
+    if not created:
+        user.email = args.email
+        user.is_staff = True
+        user.is_superuser = True
+
+    user.set_password(senha)
     user.save()
-    print("✅ Senha do usuário admin resetada para: camara@1")
-except User.DoesNotExist:
-    user = User.objects.create_superuser("admin", "admin@camara.parauapebas.pa.leg.br", "camara@1")
-    print("✅ Novo usuário admin criado com senha: camara@1")
 
-print("🎯 Acesse: https://sistemas.parauapebas.pa.leg.br/arquivo/admin/")
-print("🔑 Usuário: admin")
-print("🔑 Senha: camara@1")
+    status = 'criado' if created else 'atualizado'
+    print(f'Superusuário {args.username} {status} com sucesso.')
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as exc:
+        print(f'Erro: {exc}', file=sys.stderr)
+        sys.exit(1)
